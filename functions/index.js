@@ -1,9 +1,13 @@
+const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+admin.initializeApp();
+
+// API Endpoints
+const userEndpoints = require("./endpoints/user");
+
+// Expose Express API as a single Cloud Function
+// This HTTPS endpoint can only be accessed by your Firebase Users.
+// Requests need to be authorized by providing an `Authorization` HTTP header
+// with value `Bearer <Firebase ID Token>`.
+exports.users = functions.https.onRequest(userEndpoints.app);
