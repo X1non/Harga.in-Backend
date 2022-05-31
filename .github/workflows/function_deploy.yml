@@ -21,14 +21,12 @@ jobs:
     
     # script
     steps:
-      - name: Navigate to functions folder
-        run: cd functions
+      - name: Install firebase-tools
+        run: npm i -g firebase-tools
         
       - name: Install dependencies
         run: npm install
-        
-      - name: Redirect back from functions folder
-        run: cd ..
+        working-directory: ./functions
         
       - name: Deploy firebase functions
         run: firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }}
