@@ -19,7 +19,6 @@ const validateFirebaseIdToken = async (req, res, next) => {
     res.status(403).send('Unauthorized');
     return;
   }
-  
   let idToken;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     functions.logger.log('Found "Authorization" header');
