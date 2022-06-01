@@ -21,12 +21,15 @@ jobs:
     
     # script
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Install firebase-tools
         run: npm i -g firebase-tools
         
       - name: Install dependencies
         run: npm install
-        working-directory: ./functions
+        working-directory: functions
         
       - name: Deploy firebase functions
         run: firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }}
