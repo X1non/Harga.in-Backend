@@ -10,6 +10,10 @@ const cors = require('cors')({
 const authMiddleware = require("../authMiddleware");
 const app = express();
 
+const isObjectEmpty = (obj) => {
+  return obj && Object.keys(obj).length === 0 && Object.getPrototypeOf(obj) === Object.prototype;
+}
+
 // Applying CORS, Cookie Parser, and Middleware that validates Firebase ID Token
 app.use(cors);
 app.use(cookieParser);
@@ -123,7 +127,7 @@ app.get("/:id", async (req, res) => {
 app.put("/:id", async (req, res) => {
   const data = req.body;
 
-  if (!data) {
+  if (isObjectEmpty(data)) {
     res.status(400).send({
       "error": true,
       "message": `There's no data provided`
