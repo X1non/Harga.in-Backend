@@ -7,6 +7,7 @@ admin.initializeApp();
 const userEndpoints = require("./endpoints/user");
 const productEndpoints = require("./endpoints/product");
 const brandEndpoints = require("./endpoints/brand");
+const categoryEndpoints = require("./endpoints/category");
 
 // Expose Express API as a single Cloud Function
 // This HTTPS endpoint can only be accessed by your Firebase Users.
@@ -15,3 +16,4 @@ const brandEndpoints = require("./endpoints/brand");
 exports.users = functions.https.onRequest(userEndpoints.app);
 exports.products = functions.https.onRequest(productEndpoints.app);
 exports.brands = functions.https.onRequest(brandEndpoints.app);
+exports.categories = functions.https.onRequest(categoryEndpoints.app);
