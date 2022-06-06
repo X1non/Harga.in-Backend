@@ -19,10 +19,10 @@ app.use(cors);
 app.use(cookieParser);
 app.use(authMiddleware);
 
-// Create Product
+// Create Category
 app.post("/", async (req, res) => {
 	const data = req.body;
-	const requiredData = ["title", "description"];
+	const requiredData = ["name"];
 	let missingData;
 	let emptyData = [];
 
@@ -41,7 +41,7 @@ app.post("/", async (req, res) => {
 	if (missingData) {
 		res.status(400).send({
 			error: true,
-			message: `Product needs to have ${missingData} attribute`,
+			message: `Category needs to have ${missingData} attribute`,
 		});
 		return;
 	}
@@ -58,79 +58,79 @@ app.post("/", async (req, res) => {
 	data["updatedAt"] = "";
 
 	try {
-		const createdProductRef = await admin.firestore().collection("products").add(data);
-		const createdProduct = await createdProductRef.get();
+		const createdCategoryRef = await admin.firestore().collection("categories").add(data);
+		const createdCategory = await createdCategoryRef.get();
 		res.status(201).send({
 			error: false,
-			message: `Product successfully created`,
-			data: { id: createdProduct.id, ...createdProduct.data() },
+			message: `Category successfully created`,
+			data: { id: createdCategory.id, ...createdCategory.data() },
 		});
 	} catch (error) {
 		res.status(404).send({
 			error: true,
-			message: `Error creating product`,
+			message: `Error creating category`,
 		});
 	}
 });
 
-// Get all Products
+// Get all Categories
 app.get("/", async (req, res) => {
 	try {
-		const productsSnapshot = await admin.firestore().collection("products").get();
-		let products = [];
+		const categoriesSnapshot = await admin.firestore().collection("categories").get();
+		let categories = [];
 
-		productsSnapshot.forEach((doc) => {
-			let productId = doc.id;
-			let productData = doc.data();
+		categoriesSnapshot.forEach((doc) => {
+			let categoryId = doc.id;
+			let categoryData = doc.data();
 
-			products.push({ productId, ...productData });
+			categories.push({ categoryId, ...categoryData });
 		});
 
 		res.status(200).send({
 			error: false,
-			message: "Products fetched successfully",
-			data: products,
+			message: "Categories fetched successfully",
+			data: categories,
 		});
 	} catch (error) {
 		res.status(404).send({
 			error: true,
-			message: `Error fetching products`,
+			message: `Error fetching categories`,
 		});
 	}
 });
 
-// Get specified Product by ID
+// Get specified Category by ID
 app.get("/:id", async (req, res) => {
 	try {
-		const productSnapshot = await admin.firestore().collection("products").doc(req.params.id).get();
-		const productId = productSnapshot.id;
-		const productData = productSnapshot.data();
+		const categorySnapshot = await admin.firestore().collection("categories").doc(req.params.id).get();
+		const categoryId = categorySnapshot.id;
+		const categoryData = categorySnapshot.data();
 
-		if (!productData) {
+		if (!categoryData) {
 			res.status(200).send({
 				error: false,
-				message: "Product fetched successfully",
+				message: "Category fetched successfully",
 				data: {},
 			});
 		} else {
 			res.status(200).send({
 				error: false,
-				message: "Product fetched successfully",
-				data: { id: productId, ...productData },
+				message: "Category fetched successfully",
+				data: { id: categoryId, ...categoryData },
 			});
 		}
 	} catch (error) {
 		res.status(404).send({
 			error: true,
-			message: `Error fetching product`,
+			message: `Error fetching category`,
 		});
 	}
 });
 
-// Update Product
+// Update Category
 app.put("/:id", async (req, res) => {
 	const data = req.body;
-	const requiredData = ["title", "description"];
+	const requiredData = ["name"];
 	let emptyData = [];
 
 	requiredData.forEach((attr) => {
@@ -156,64 +156,64 @@ app.put("/:id", async (req, res) => {
 	}
 
 	try {
-		const productRef = admin.firestore().collection("products").doc(req.params.id);
-		const productSnapshot = await productRef.get();
-		const productData = productSnapshot.data();
+		const categoryRef = admin.firestore().collection("categories").doc(req.params.id);
+		const categorySnapshot = await categoryRef.get();
+		const categoryData = categorySnapshot.data();
 
-		if (!productData) {
+		if (!categoryData) {
 			res.status(404).send({
 				error: true,
-				message: `No product data to be found`,
+				message: `No category data to be found`,
 			});
 			return;
 		}
 
 		data["updatedAt"] = admin.firestore.FieldValue.serverTimestamp();
 
-		await productRef.update(data);
-		const productUpdated = await productRef.get();
+		await categoryRef.update(data);
+		const categoryUpdated = await categoryRef.get();
 
 		res.status(200).send({
 			error: false,
-			message: "Product updated successfully",
-			data: { id: productUpdated.id, ...productUpdated.data() },
+			message: "Category updated successfully",
+			data: { id: categoryUpdated.id, ...categoryUpdated.data() },
 		});
 	} catch (error) {
 		console.log(error);
 		res.status(404).send({
 			error: true,
-			message: `Error updating product`,
+			message: `Error updating category`,
 		});
 	}
 });
 
-// Delete Product
+// Delete Category
 app.delete("/:id", async (req, res) => {
 	try {
-		const productRef = admin.firestore().collection("products").doc(req.params.id);
-		const productSnapshot = await productRef.get();
-		const productData = productSnapshot.data();
+		const categoryRef = admin.firestore().collection("categories").doc(req.params.id);
+		const categorySnapshot = await categoryRef.get();
+		const categoryData = categorySnapshot.data();
 
-		if (!productData) {
+		if (!categoryData) {
 			res.status(404).send({
 				error: true,
-				message: `No product data to be found`,
+				message: `No category data to be found`,
 			});
 			return;
 		}
 
-		const productDeleted = await productRef.get();
-		await productRef.delete();
+		const categoryDeleted = await categoryRef.get();
+		await categoryRef.delete();
 
 		res.status(200).send({
 			error: false,
-			message: "Product deleted successfully",
-			data: { id: productDeleted.id, ...productDeleted.data() },
+			message: "Category deleted successfully",
+			data: { id: categoryDeleted.id, ...categoryDeleted.data() },
 		});
 	} catch (error) {
 		res.status(404).send({
 			error: true,
-			message: `Error deleting product`,
+			message: `Error deleting category`,
 		});
 	}
 });

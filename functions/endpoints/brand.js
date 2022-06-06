@@ -19,10 +19,10 @@ app.use(cors);
 app.use(cookieParser);
 app.use(authMiddleware);
 
-// Create Product
+// Create Brand
 app.post("/", async (req, res) => {
 	const data = req.body;
-	const requiredData = ["title", "description"];
+	const requiredData = ["name"];
 	let missingData;
 	let emptyData = [];
 
@@ -41,7 +41,7 @@ app.post("/", async (req, res) => {
 	if (missingData) {
 		res.status(400).send({
 			error: true,
-			message: `Product needs to have ${missingData} attribute`,
+			message: `Brand needs to have ${missingData} attribute`,
 		});
 		return;
 	}
@@ -58,79 +58,79 @@ app.post("/", async (req, res) => {
 	data["updatedAt"] = "";
 
 	try {
-		const createdProductRef = await admin.firestore().collection("products").add(data);
-		const createdProduct = await createdProductRef.get();
+		const createdBrandRef = await admin.firestore().collection("brands").add(data);
+		const createdBrand = await createdBrandRef.get();
 		res.status(201).send({
 			error: false,
-			message: `Product successfully created`,
-			data: { id: createdProduct.id, ...createdProduct.data() },
+			message: `Brand successfully created`,
+			data: { id: createdBrand.id, ...createdBrand.data() },
 		});
 	} catch (error) {
 		res.status(404).send({
 			error: true,
-			message: `Error creating product`,
+			message: `Error creating brand`,
 		});
 	}
 });
 
-// Get all Products
+// Get all Brands
 app.get("/", async (req, res) => {
 	try {
-		const productsSnapshot = await admin.firestore().collection("products").get();
-		let products = [];
+		const brandsSnapshot = await admin.firestore().collection("brands").get();
+		let brands = [];
 
-		productsSnapshot.forEach((doc) => {
-			let productId = doc.id;
-			let productData = doc.data();
+		brandsSnapshot.forEach((doc) => {
+			let brandId = doc.id;
+			let brandData = doc.data();
 
-			products.push({ productId, ...productData });
+			brands.push({ brandId, ...brandData });
 		});
 
 		res.status(200).send({
 			error: false,
-			message: "Products fetched successfully",
-			data: products,
+			message: "Brands fetched successfully",
+			data: brands,
 		});
 	} catch (error) {
 		res.status(404).send({
 			error: true,
-			message: `Error fetching products`,
+			message: `Error fetching brands`,
 		});
 	}
 });
 
-// Get specified Product by ID
+// Get specified Brand by ID
 app.get("/:id", async (req, res) => {
 	try {
-		const productSnapshot = await admin.firestore().collection("products").doc(req.params.id).get();
-		const productId = productSnapshot.id;
-		const productData = productSnapshot.data();
+		const brandSnapshot = await admin.firestore().collection("brands").doc(req.params.id).get();
+		const brandId = brandSnapshot.id;
+		const brandData = brandSnapshot.data();
 
-		if (!productData) {
+		if (!brandData) {
 			res.status(200).send({
 				error: false,
-				message: "Product fetched successfully",
-				data: {},
+				message: "Brand fetched successfully",
+				brand: {},
 			});
 		} else {
 			res.status(200).send({
 				error: false,
-				message: "Product fetched successfully",
-				data: { id: productId, ...productData },
+				message: "Brand fetched successfully",
+				data: { id: brandId, ...brandData },
 			});
 		}
 	} catch (error) {
 		res.status(404).send({
 			error: true,
-			message: `Error fetching product`,
+			message: `Error fetching brand`,
 		});
 	}
 });
 
-// Update Product
+// Update Brand
 app.put("/:id", async (req, res) => {
 	const data = req.body;
-	const requiredData = ["title", "description"];
+	const requiredData = ["name"];
 	let emptyData = [];
 
 	requiredData.forEach((attr) => {
@@ -156,64 +156,64 @@ app.put("/:id", async (req, res) => {
 	}
 
 	try {
-		const productRef = admin.firestore().collection("products").doc(req.params.id);
-		const productSnapshot = await productRef.get();
-		const productData = productSnapshot.data();
+		const brandRef = admin.firestore().collection("brands").doc(req.params.id);
+		const brandSnapshot = await brandRef.get();
+		const brandData = brandSnapshot.data();
 
-		if (!productData) {
+		if (!brandData) {
 			res.status(404).send({
 				error: true,
-				message: `No product data to be found`,
+				message: `No brand data to be found`,
 			});
 			return;
 		}
 
 		data["updatedAt"] = admin.firestore.FieldValue.serverTimestamp();
 
-		await productRef.update(data);
-		const productUpdated = await productRef.get();
+		await brandRef.update(data);
+		const brandUpdated = await brandRef.get();
 
 		res.status(200).send({
 			error: false,
-			message: "Product updated successfully",
-			data: { id: productUpdated.id, ...productUpdated.data() },
+			message: "Brand updated successfully",
+			data: { id: brandUpdated.id, ...brandUpdated.data() },
 		});
 	} catch (error) {
 		console.log(error);
 		res.status(404).send({
 			error: true,
-			message: `Error updating product`,
+			message: `Error updating brand`,
 		});
 	}
 });
 
-// Delete Product
+// Delete Brand
 app.delete("/:id", async (req, res) => {
 	try {
-		const productRef = admin.firestore().collection("products").doc(req.params.id);
-		const productSnapshot = await productRef.get();
-		const productData = productSnapshot.data();
+		const brandRef = admin.firestore().collection("brands").doc(req.params.id);
+		const brandSnapshot = await brandRef.get();
+		const brandData = brandSnapshot.data();
 
-		if (!productData) {
+		if (!brandData) {
 			res.status(404).send({
 				error: true,
-				message: `No product data to be found`,
+				message: `No brand data to be found`,
 			});
 			return;
 		}
 
-		const productDeleted = await productRef.get();
-		await productRef.delete();
+		const brandDeleted = await brandRef.get();
+		await brandRef.delete();
 
 		res.status(200).send({
 			error: false,
-			message: "Product deleted successfully",
-			data: { id: productDeleted.id, ...productDeleted.data() },
+			message: "Brand deleted successfully",
+			data: { id: brandDeleted.id, ...brandDeleted.data() },
 		});
 	} catch (error) {
 		res.status(404).send({
 			error: true,
-			message: `Error deleting product`,
+			message: `Error deleting brand`,
 		});
 	}
 });
