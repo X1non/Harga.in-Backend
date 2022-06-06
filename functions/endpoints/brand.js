@@ -24,13 +24,19 @@ app.post("/", async (req, res) => {
   const data = req.body;
   const requiredData = ["name"];
   let missingData;
+  let emptyData = [];
 
   requiredData.forEach((attr) => {
     if(!(attr in data)) {
       missingData = attr;
       return;
+    } else {
+      // Check if req.body value empty
+      if(data[attr] === "") {
+        emptyData.push(attr);
+      }
     }
-  })
+  }) 
 
   if (missingData) {
     res.status(400).send({
@@ -39,6 +45,15 @@ app.post("/", async (req, res) => {
     });
     return;
   }
+
+  if (emptyData.length > 0) {
+    res.status(400).send({
+      "error": true,
+      "message": `This requred property: ${emptyData} cannot be empty`
+    });
+    return;
+  }
+
   data["createdAt"] = admin.firestore.FieldValue.serverTimestamp();
   data["updatedAt"] = "";
   
@@ -48,7 +63,7 @@ app.post("/", async (req, res) => {
     res.status(201).send({
       "error": false,
       "message": `Brand successfully created`,
-      "createdBrand": {id: createdBrand.id, ...createdBrand.data()}
+      "data": {id: createdBrand.id, ...createdBrand.data()}
     });
   } catch (error) {
     res.status(404).send({
@@ -74,7 +89,7 @@ app.get("/", async (req, res) => {
     res.status(200).send({
       "error": false,
       "message": "Brands fetched successfully",
-      "brands": brands
+      "data": brands
     });
   } catch (error) {
     res.status(404).send({
@@ -101,7 +116,7 @@ app.get("/:id", async (req, res) => {
       res.status(200).send({
         "error": false,
         "message": "Brand fetched successfully",
-        "brand": {id: brandId, ...brandData}
+        "data": {id: brandId, ...brandData}
       });
     }
   } catch (error) {
@@ -115,6 +130,14 @@ app.get("/:id", async (req, res) => {
 // Update Brand
 app.put("/:id", async (req, res) => {
   const data = req.body;
+  const requiredData = ["name"];
+  let emptyData = []
+
+  requiredData.forEach((attr) => {
+    if(attr in data && data[attr] === "") {
+      emptyData.push(attr);
+    } 
+  })
 
   if (isObjectEmpty(data)) {
     res.status(400).send({
@@ -122,7 +145,15 @@ app.put("/:id", async (req, res) => {
       "message": `There's no data provided`
     });
     return;
-  } 
+  }
+  
+  if (emptyData.length > 0) {
+    res.status(400).send({
+      "error": true,
+      "message": `This requred property: ${emptyData} cannot be empty`
+    });
+    return;
+  }
   
   try {
     const brandRef = admin.firestore().collection("brands").doc(req.params.id);
@@ -145,7 +176,7 @@ app.put("/:id", async (req, res) => {
     res.status(200).send({
       "error": false,
       "message": "Brand updated successfully",
-      "updatedBrand": {id: brandUpdated.id, ...brandUpdated.data()}
+      "data": {id: brandUpdated.id, ...brandUpdated.data()}
     });
   } catch (error) {
     console.log(error);
@@ -177,7 +208,7 @@ app.delete("/:id", async (req, res) => {
     res.status(200).send({
       "error": false,
       "message": "Brand deleted successfully",
-      "deletedBrand": {id: brandDeleted.id, ...brandDeleted.data()}
+      "data": {id: brandDeleted.id, ...brandDeleted.data()}
     });
   } catch (error) {
     res.status(404).send({

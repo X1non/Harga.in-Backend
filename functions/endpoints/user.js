@@ -24,12 +24,18 @@ app.post("/", async (req, res) => {
   const data = req.body;
   const requiredData = ["name", "username", "email"];
   let missingData;
+  let emptyData = [];
 
   requiredData.forEach((attr) => {
     if(!(attr in data)) {
       missingData = attr;
       return;
-    }
+    } else {
+			// Check if req.body value empty
+			if (data[attr] === "") {
+				emptyData.push(attr);
+			}
+		}
   })
 
   if (missingData) {
@@ -39,6 +45,14 @@ app.post("/", async (req, res) => {
     });
     return;
   }
+
+  if (emptyData.length > 0) {
+		res.status(400).send({
+			error: true,
+			message: `This requred property: ${emptyData} cannot be empty`,
+		});
+		return;
+	}
 
   data["createdAt"] = admin.firestore.FieldValue.serverTimestamp();
   data["updatedAt"] = "";
@@ -58,7 +72,7 @@ app.post("/", async (req, res) => {
       res.status(201).send({
         "error": false,
         "message": `User successfully created`,
-        "createdUser": {id: createdUser.id, ...createdUser.data()}
+        "data": {id: createdUser.id, ...createdUser.data()}
       });
     }
 
@@ -86,7 +100,7 @@ app.get("/", async (req, res) => {
     res.status(200).send({
       "error": false,
       "message": "Users fetched successfully",
-      "users": users
+      "data": users
     });
   } catch (error) {
     res.status(404).send({
@@ -106,13 +120,13 @@ app.get("/:id", async (req, res) => {
       res.status(200).send({
         "error": false,
         "message": "User fetched successfully",
-        "user": {}
+        "data": {}
       });
     } else {
       res.status(200).send({
         "error": false,
         "message": "User fetched successfully",
-        "user": {id: userId, ...userData}
+        "data": {id: userId, ...userData}
       });
     }
   } catch (error) {
@@ -126,6 +140,14 @@ app.get("/:id", async (req, res) => {
 // Update User
 app.put("/:id", async (req, res) => {
   const data = req.body;
+  const requiredData = ["name", "username", "email"];
+	let emptyData = [];
+
+	requiredData.forEach((attr) => {
+		if (attr in data && data[attr] === "") {
+			emptyData.push(attr);
+		}
+	});
 
   if (isObjectEmpty(data)) {
     res.status(400).send({
@@ -141,6 +163,14 @@ app.put("/:id", async (req, res) => {
     return;
   }
 
+  if (emptyData.length > 0) {
+		res.status(400).send({
+			error: true,
+			message: `This requred property: ${emptyData} cannot be empty`,
+		});
+		return;
+	}
+
   data["updatedAt"] = admin.firestore.FieldValue.serverTimestamp();
 
   try {
@@ -151,7 +181,7 @@ app.put("/:id", async (req, res) => {
     res.status(200).send({
       "error": false,
       "message": "User updated successfully",
-      "updatedUser": {id: userUpdated.id, ...userUpdated.data()}
+      "data": {id: userUpdated.id, ...userUpdated.data()}
     });
   } catch (error) {
     res.status(404).send({
@@ -179,7 +209,7 @@ app.delete("/:id", async (req, res) => {
     res.status(200).send({
       "error": false,
       "message": "User deleted successfully",
-      "deletedUser": {id: userDeleted.id, ...userDeleted.data()}
+      "data": {id: userDeleted.id, ...userDeleted.data()}
     });
   } catch (error) {
     res.status(404).send({
