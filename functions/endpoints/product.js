@@ -8,11 +8,9 @@ const cors = require("cors")({
 	allowedHeaders: "Authorization",
 });
 const authMiddleware = require("../authMiddleware");
+const getOptimalPrice = require("../helpers/getOptimalPrice");
+const isObjectEmpty = require("../helpers/isObjectEmpty");
 const app = express();
-
-const isObjectEmpty = (obj) => {
-	return obj && Object.keys(obj).length === 0 && Object.getPrototypeOf(obj) === Object.prototype;
-};
 
 // Applying CORS, Cookie Parser, and Middleware that validates Firebase ID Token
 app.use(cors);
@@ -22,7 +20,7 @@ app.use(authMiddleware);
 // Create Product
 app.post("/", async (req, res) => {
 	const data = req.body;
-	const requiredData = ["title", "description"];
+	const requiredData = ["title", "description", "image", "cost", "startPrice", "endPrice"];
 	let missingData;
 	let emptyData = [];
 
@@ -41,7 +39,7 @@ app.post("/", async (req, res) => {
 	if (missingData) {
 		res.status(400).send({
 			error: true,
-			message: `Product needs to have ${missingData} attribute`,
+			message: `Product needs to have ${missingData} property`,
 		});
 		return;
 	}
@@ -49,7 +47,7 @@ app.post("/", async (req, res) => {
 	if (emptyData.length > 0) {
 		res.status(400).send({
 			error: true,
-			message: `This requred property: ${emptyData} cannot be empty`,
+			message: `This property: '${emptyData}' cannot be empty`,
 		});
 		return;
 	}
@@ -58,6 +56,10 @@ app.post("/", async (req, res) => {
 	data["updatedAt"] = "";
 
 	try {
+    const calculatedPrice = await getOptimalPrice(data);
+    data["optimalPrice"] = calculatedPrice.optimal_price;
+    data["pricePredictions"] = calculatedPrice.predictions;
+
 		const createdProductRef = await admin.firestore().collection("products").add(data);
 		const createdProduct = await createdProductRef.get();
 		res.status(201).send({
@@ -130,16 +132,12 @@ app.get("/:id", async (req, res) => {
 // Update Product
 app.put("/:id", async (req, res) => {
 	const data = req.body;
-	const requiredData = ["title", "description"];
+	const avaliableToUpdateData = ["title", "description", "image", "cost", "startPrice", "endPrice"];
+  const priceData = ["cost", "startPrice", "endPrice"];
+  let isUpdatePrice = false;
 	let emptyData = [];
 
-	requiredData.forEach((attr) => {
-		if (attr in data && data[attr] === "") {
-			emptyData.push(attr);
-		}
-	});
-
-	if (isObjectEmpty(data)) {
+  if (isObjectEmpty(data)) {
 		res.status(400).send({
 			error: true,
 			message: `There's no data provided`,
@@ -147,10 +145,28 @@ app.put("/:id", async (req, res) => {
 		return;
 	}
 
+  for (field in data) {
+    if (!avaliableToUpdateData.includes(field)) {
+      res.status(403).send({
+        error: true,
+        message: `You are not allowed to add or change '${field}' data to product`,
+      });
+      return;
+    } else if (priceData.includes(field)) {
+      isUpdatePrice = true;
+    }
+  }
+
+	avaliableToUpdateData.forEach((attr) => {
+		if (attr in data && data[attr] === "") {
+			emptyData.push(attr);
+		}
+	});
+
 	if (emptyData.length > 0) {
 		res.status(400).send({
 			error: true,
-			message: `This requred property: ${emptyData} cannot be empty`,
+			message: `This property: '${emptyData}' cannot be empty`,
 		});
 		return;
 	}
@@ -170,7 +186,14 @@ app.put("/:id", async (req, res) => {
 
 		data["updatedAt"] = admin.firestore.FieldValue.serverTimestamp();
 
-		await productRef.update(data);
+    if (isUpdatePrice) {
+      const updatedPriceData = await getOptimalPrice(data);
+
+      data["optimalPrice"] = updatedPriceData.optimal_price;
+      data["pricePredictions"] = updatedPriceData.predictions;
+    }
+
+    await productRef.update(data);
 		const productUpdated = await productRef.get();
 
 		res.status(200).send({
@@ -179,7 +202,6 @@ app.put("/:id", async (req, res) => {
 			data: { id: productUpdated.id, ...productUpdated.data() },
 		});
 	} catch (error) {
-		console.log(error);
 		res.status(404).send({
 			error: true,
 			message: `Error updating product`,
