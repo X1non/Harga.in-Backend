@@ -8,11 +8,8 @@ const cors = require("cors")({
 	allowedHeaders: "Authorization",
 });
 const authMiddleware = require("../authMiddleware");
+const isObjectEmpty = require("../helpers/isObjectEmpty");
 const app = express();
-
-const isObjectEmpty = (obj) => {
-	return obj && Object.keys(obj).length === 0 && Object.getPrototypeOf(obj) === Object.prototype;
-};
 
 // Applying CORS, Cookie Parser, and Middleware that validates Firebase ID Token
 app.use(cors);
@@ -41,7 +38,7 @@ app.post("/", async (req, res) => {
 	if (missingData) {
 		res.status(400).send({
 			error: true,
-			message: `Category needs to have ${missingData} attribute`,
+			message: `Category needs to have ${missingData} property`,
 		});
 		return;
 	}
@@ -49,7 +46,7 @@ app.post("/", async (req, res) => {
 	if (emptyData.length > 0) {
 		res.status(400).send({
 			error: true,
-			message: `This requred property: ${emptyData} cannot be empty`,
+			message: `This property: '${emptyData}' cannot be empty`,
 		});
 		return;
 	}
@@ -150,7 +147,7 @@ app.put("/:id", async (req, res) => {
 	if (emptyData.length > 0) {
 		res.status(400).send({
 			error: true,
-			message: `This requred property: ${emptyData} cannot be empty`,
+			message: `This property: '${emptyData}' cannot be empty`,
 		});
 		return;
 	}
@@ -179,7 +176,6 @@ app.put("/:id", async (req, res) => {
 			data: { id: categoryUpdated.id, ...categoryUpdated.data() },
 		});
 	} catch (error) {
-		console.log(error);
 		res.status(404).send({
 			error: true,
 			message: `Error updating category`,
