@@ -1,11 +1,12 @@
+require("dotenv").config();
 const axios = require("axios").default;
 const getUSDToIDRCurrency = require("../helpers/getUSDToIDRCurrency");
 
 // Optimal price ML's model
 const getOptimalPrice = async (productData) => {
   try {
-    const ML_MODEL_URL = "http://35.223.244.20:5000/";
-    const ML_MODEL_ENDPOINT = `${ML_MODEL_URL}/predict`;
+    const BASE_URL = process.env.ML_MODEL_URL;
+    const ML_MODEL_ENDPOINT = `${BASE_URL}/predict`;
     const currency = await getUSDToIDRCurrency();
 
     const productPrice = {
