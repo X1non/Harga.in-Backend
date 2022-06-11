@@ -129,6 +129,36 @@ app.get("/:id", async (req, res) => {
   }
 });
 
+// Get specified Product by Title
+app.get("/search/:title", async (req, res) => {
+  try {
+    const productsSnapshot = await admin.firestore().collection("products").get();
+    const productTitle = req.params.title.toLowerCase();
+    let products = [];
+
+    productsSnapshot.forEach((doc) => {
+      let docTitle = doc.data().title.toLowerCase();
+      if (docTitle.includes(productTitle)) {
+        let productId = doc.id;
+        let productData = doc.data();
+
+        products.push({ productId, ...productData });
+      }
+    });
+
+    res.status(200).send({
+      error: false,
+      message: "Products fetched successfully",
+      data: products,
+    });
+  } catch (error) {
+    res.status(404).send({
+      error: true,
+      message: `Error fetching products`,
+    });
+  }
+});
+
 // Update Product
 app.put("/:id", async (req, res) => {
   const data = req.body;
