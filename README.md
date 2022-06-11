@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# Harga.in-Backend
-Backend section of Harga.in, Bangkit's Company Capstone Project of C22-PO03 group.
-=======
 # Harga.In  
 
 ## What is Harga.in?
@@ -53,4 +49,3 @@ Team ID: C22-PO03
 
 ## Contact
 --
->>>>>>> 4a5d91cb2a49c7706e98be149d9242cc456e8509
