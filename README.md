@@ -42,7 +42,42 @@ Team ID: C22-PO03
 --
 
 ## API Documentation
---
+This API consists of four endpoints: **User**, **Product**, **Category**, and **Brand**.
+Each endpoint require a valid Bearer Token to be included in the header of the request. A token, which provided by Firebase Authentication, can only be acquired from the account registered on the mobile application.
+
+### User endpoint
+These endpoints writes or manipulates information related to the User whose Token or User ID is provided with the request:
+* [Create User](documentation/user.md#create-user) : `POST /users`
+* [Update User](documentation/user.md#update-user) : `PUT /users/:id`
+* [Delete User](documentation/user.md#delete-user) : `DELETE /users/:id`
+
+These endpoints displays information of every User in the application or specified User whose ID provided with the request:
+* [Get All User](documentation/user.md#get-all-users) : `GET /users`
+* [Get User by ID](documentation/user.md#get-users-by-id) : `GET /users/:id`
+
+### Product endpoint
+These endpoints writes, manipulates, or displays Product data which its ID is provided with the request:
+* [Create Product](/) : `POST /products`
+* [Get All Product](/) : `GET /products`
+* [Get Product by ID](/) : `GET /products/:id`
+* [Update Product](/) : `PUT /products/:id`
+* [Delete Product](/) : `DELETE /products/:id`
+
+### Category endpoint
+These endpoints writes, manipulates, or displays Category data which its ID is provided with the request:
+* [Create Category](/) : `POST /categories`
+* [Get All Category](/) : `GET /categories`
+* [Get Category by ID](/) : `GET /categories/:id`
+* [Update Category](/) : `PUT /categories/:id`
+* [Delete Category](/) : `DELETE /categories/:id`
+
+### Brand endpoint
+These endpoints writes, manipulates, or displays Brand data which its ID is provided with the request:
+* [Create Brand](/) : `POST /brands`
+* [Get All Brand](/) : `GET /brands`
+* [Get Brand by ID](/) : `GET /brands/:id`
+* [Update Brand](/) : `PUT /brands/:id`
+* [Delete Brand](/) : `DELETE /brands/:id`
 
 ## Contributing
 --
