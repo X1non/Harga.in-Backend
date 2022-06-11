@@ -49,14 +49,19 @@ const getOptimalPrice = async (productData) => {
             x.forEach(convertPriceToIDR);
           });
 
-          // Convert array_of _rray to array-of_object
+          // Convert array_of _array to array_of_object
           let arrOfObjects = predictResult["predictions"].map((val) => ({
             selling_price: val[0],
             total_sales: val[1],
             total_profit: val[2],
           }));
 
-          predictResult["predictions"] = arrOfObjects;
+          //Order By selling_price ascending
+          let sortedPrediction = arrOfObjects.sort((a, b) => {
+            return a.selling_price - b.selling_price;
+          });
+
+          predictResult["predictions"] = sortedPrediction;
         } else {
           // optimal_price
           predictResult["optimal_price"] = predictResult[attr] * currency["USD_IDR"];
