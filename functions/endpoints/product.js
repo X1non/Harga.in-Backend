@@ -70,7 +70,7 @@ app.post("/", async (req, res) => {
   } catch (error) {
     res.status(404).send({
       error: true,
-      message: `Error creating product`,
+      message: `Error creating product: ${error}`,
     });
   }
 });
