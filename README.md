@@ -1,6 +1,7 @@
 # Harga.In  
 
 ## What is Harga.in?
+![Harga.In Logo](./media/hargain-logo.png)  
 Harga.In is a Smart Engine / Pricing Optimization platform. This platform uses Machine Learning to do and process the optimization for new products. Our goal is want to helps and solves the problem about determining retail prices. We want to help promote lower-middle-scale entrepreneurs or SMEs in determining sales prices so that they can compete with competitors without being threatened about not being able to make a profit.
 
 ## Table Of Contents
@@ -73,11 +74,11 @@ These endpoints writes, manipulates, or displays Category data which its ID is p
 
 ### Brand endpoint
 These endpoints writes, manipulates, or displays Brand data which its ID is provided with the request:
-* [Create Brand](/) : `POST /brands`
-* [Get All Brand](/) : `GET /brands`
-* [Get Brand by ID](/) : `GET /brands/:id`
-* [Update Brand](/) : `PUT /brands/:id`
-* [Delete Brand](/) : `DELETE /brands/:id`
+* [Create Brand](./documentation/brand.md#create-brand) : `POST /brands`
+* [Get All Brand](./documentation/brand.md#get-all-brands) : `GET /brands`
+* [Get Brand by ID](./documentation/brand.md#get-brand-by-id) : `GET /brands/:id`
+* [Update Brand](./documentation/brand.md#update-brand) : `PUT /brands/:id`
+* [Delete Brand](./documentation/brand.md#delete-brand) : `DELETE /brands/:id`
 
 ## Contributing
 --
