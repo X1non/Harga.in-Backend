@@ -10,6 +10,7 @@ const cors = require("cors")({
 const authMiddleware = require("../authMiddleware");
 const getOptimalPrice = require("../helpers/getOptimalPrice");
 const isObjectEmpty = require("../helpers/isObjectEmpty");
+const dm = require("../helpers/dataModifier");
 const app = express();
 
 // Applying CORS, Cookie Parser, and Middleware that validates Firebase ID Token
@@ -20,7 +21,17 @@ app.use(authMiddleware);
 // Create Product
 app.post("/", async (req, res) => {
   const data = req.body;
-  const requiredData = ["title", "description", "image", "cost", "startPrice", "endPrice", "categoryId", "brandId"];
+  const requiredData = [
+    "title",
+    "description",
+    "image",
+    "cost",
+    "currentPrice",
+    "startPrice",
+    "endPrice",
+    "categoryId",
+    "brandId",
+  ];
   let missingData;
   let emptyData = [];
   let invalidNumericData = [];
@@ -64,7 +75,7 @@ app.post("/", async (req, res) => {
     return;
   }
 
-  // Check whether prices maintains cost < startPrice < endPrice 
+  // Check whether prices maintains cost < startPrice < endPrice
   if (data["cost"] >= data["startPrice"]) {
     res.status(400).send({
       error: true,
@@ -119,9 +130,22 @@ app.get("/", async (req, res) => {
     const titleQuery = req.query.title?.toLowerCase();
     const categoryQuery = req.query.category;
     let products = [];
+    const brandsMap = new Map();
+    const categoriesMap = new Map();
 
     let productsRef = admin.firestore().collection("products");
     const productsSnapshot = await productsRef.get();
+
+    let brandSnapshot = await admin.firestore().collection("brands").get();
+    let categorySnapshot = await admin.firestore().collection("categories").get();
+
+    brandSnapshot.forEach((doc) => {
+      brandsMap.set(doc.id, doc.data().name);
+    });
+
+    categorySnapshot.forEach((doc) => {
+      categoriesMap.set(doc.id, doc.data().name);
+    });
 
     // Fetch by Queries
     if (titleQuery && !categoryQuery) {
@@ -132,6 +156,8 @@ app.get("/", async (req, res) => {
         if (docTitle.includes(titleQuery)) {
           let productId = doc.id;
           let productData = doc.data();
+          dm.setBrandCategory(brandsMap, categoriesMap, productData)
+
           products.push({ productId, ...productData });
         }
       });
@@ -143,6 +169,8 @@ app.get("/", async (req, res) => {
         if (docCategoryId === categoryQuery) {
           let productId = doc.id;
           let productData = doc.data();
+          dm.setBrandCategory(brandsMap, categoriesMap, productData)
+      
           products.push({ productId, ...productData });
         }
       });
@@ -155,6 +183,8 @@ app.get("/", async (req, res) => {
         if (docTitle.includes(titleQuery) && docCategoryId === categoryQuery) {
           let productId = doc.id;
           let productData = doc.data();
+          dm.setBrandCategory(brandsMap, categoriesMap, productData);
+
           products.push({ productId, ...productData });
         }
       });
@@ -162,6 +192,7 @@ app.get("/", async (req, res) => {
       productsSnapshot.forEach((doc) => {
         let productId = doc.id;
         let productData = doc.data();
+        dm.setBrandCategory(brandsMap, categoriesMap, productData);
 
         products.push({ productId, ...productData });
       });
@@ -187,26 +218,7 @@ app.get("/:id", async (req, res) => {
     const productId = productSnapshot.id;
     let productData = productSnapshot.data();
 
-    const brandId = productData.brandId;
-    const categoryId = productData.categoryId;
-
-    let categorySnapshot = await admin.firestore().collection("categories").doc(categoryId).get();
-    let categoryData = categorySnapshot.data();
-    productData.category = {
-      id: categoryId,
-      name: categoryData.name,
-    };
-
-    let brandSnapshot = await admin.firestore().collection("brands").doc(brandId).get();
-    let brandData = brandSnapshot.data();
-    productData.brand = {
-      id: brandId,
-      name: brandData.name,
-    };
-
-    delete productData.categoryId;
-    delete productData.brandId;
-
+    productData = await dm.appendBrandCategory(productData);
     if (!productData) {
       res.status(200).send({
         error: false,
@@ -231,7 +243,18 @@ app.get("/:id", async (req, res) => {
 // Update Product
 app.put("/:id", async (req, res) => {
   const data = req.body;
-  const updatableData = ["title", "description", "image", "cost", "startPrice", "endPrice", "categoryId", "brandId"];
+  const updatableData = [
+    "title",
+    "description",
+    "image",
+    "cost",
+    "currentPrice",
+    "startPrice",
+    "endPrice",
+    "categoryId",
+    "brandId",
+  ];
+
   const updatablePriceData = ["cost", "startPrice", "endPrice"];
   let ongoingUpdatePrice = [];
   let emptyData = [];
