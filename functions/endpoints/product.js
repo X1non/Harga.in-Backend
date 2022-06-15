@@ -64,7 +64,7 @@ app.post("/", async (req, res) => {
     return;
   }
 
-  // Check whether prices maintains cost < startPrice < endPrice
+  // Check whether prices maintains cost < startPrice < endPrice 
   if (data["cost"] >= data["startPrice"]) {
     res.status(400).send({
       error: true,
