@@ -20,9 +20,7 @@ app.use(authMiddleware);
 // Create Product
 app.post("/", async (req, res) => {
   const data = req.body;
-  const requiredData = [
-    "title", "description", "image", "cost", "startPrice", "endPrice", "categoryId", "brandId"
-  ];
+  const requiredData = ["title", "description", "image", "cost", "startPrice", "endPrice", "categoryId", "brandId"];
   let missingData;
   let emptyData = [];
   let invalidNumericData = [];
@@ -137,7 +135,7 @@ app.get("/", async (req, res) => {
           products.push({ productId, ...productData });
         }
       });
-    } else if (categoryQuery && (!titleQuery)) {
+    } else if (categoryQuery && !titleQuery) {
       console.log(req.query);
       productsSnapshot.forEach((doc) => {
         let docCategoryId = doc.data().categoryId;
@@ -164,7 +162,7 @@ app.get("/", async (req, res) => {
       productsSnapshot.forEach((doc) => {
         let productId = doc.id;
         let productData = doc.data();
-  
+
         products.push({ productId, ...productData });
       });
     }
@@ -187,7 +185,27 @@ app.get("/:id", async (req, res) => {
   try {
     const productSnapshot = await admin.firestore().collection("products").doc(req.params.id).get();
     const productId = productSnapshot.id;
-    const productData = productSnapshot.data();
+    let productData = productSnapshot.data();
+
+    const brandId = productData.brandId;
+    const categoryId = productData.categoryId;
+
+    let categorySnapshot = await admin.firestore().collection("categories").doc(categoryId).get();
+    let categoryData = categorySnapshot.data();
+    productData.category = {
+      id: categoryId,
+      name: categoryData.name,
+    };
+
+    let brandSnapshot = await admin.firestore().collection("brands").doc(brandId).get();
+    let brandData = brandSnapshot.data();
+    productData.brand = {
+      id: brandId,
+      name: brandData.name,
+    };
+
+    delete productData.categoryId;
+    delete productData.brandId;
 
     if (!productData) {
       res.status(200).send({
@@ -213,9 +231,7 @@ app.get("/:id", async (req, res) => {
 // Update Product
 app.put("/:id", async (req, res) => {
   const data = req.body;
-  const updatableData = [
-    "title", "description", "image", "cost", "startPrice", "endPrice", "categoryId", "brandId"
-  ];
+  const updatableData = ["title", "description", "image", "cost", "startPrice", "endPrice", "categoryId", "brandId"];
   const updatablePriceData = ["cost", "startPrice", "endPrice"];
   let ongoingUpdatePrice = [];
   let emptyData = [];
@@ -238,13 +254,15 @@ app.put("/:id", async (req, res) => {
         message: `You are not allowed to add or change '${field}' data to product`,
       });
       return;
-    } else if (data[field] === "") {  // Check req.body value
+    } else if (data[field] === "") {
+      // Check req.body value
       emptyData.push(attr);
     } else if (data[field] <= 0) {
       invalidNumericData.push(attr);
     }
 
-    if (updatablePriceData.includes(field)) { // Check if there's req.body prices update
+    if (updatablePriceData.includes(field)) {
+      // Check if there's req.body prices update
       ongoingUpdatePrice.push(field);
     }
   }
@@ -279,7 +297,7 @@ app.put("/:id", async (req, res) => {
     });
     return;
   }
-  
+
   try {
     const oldProductRef = admin.firestore().collection("products").doc(req.params.id);
     const oldProductSnapshot = await oldProductRef.get();
@@ -300,35 +318,39 @@ app.put("/:id", async (req, res) => {
         for (field in ongoingUpdatePrice) {
           switch (ongoingUpdatePrice[field]) {
             case "cost":
-              if (!data["startPrice"] && data["cost"] >= oldProductData["startPrice"]) return res.status(400).send({
-                error: true,
-                message: `Please set the 'cost' value to be lower than the previous 'startPrice'`,
-              });
+              if (!data["startPrice"] && data["cost"] >= oldProductData["startPrice"])
+                return res.status(400).send({
+                  error: true,
+                  message: `Please set the 'cost' value to be lower than the previous 'startPrice'`,
+                });
             case "startPrice":
-              if (!data["endPrice"] && data["startPrice"] >= oldProductData["endPrice"]) return res.status(400).send({
-                error: true,
-                message: `Please set the 'startPrice' value to be lower than the previous 'endPrice'`,
-              });
-              if (!data["cost"] && data["startPrice"] <= oldProductData["cost"]) return res.status(400).send({
-                error: true,
-                message: `Please set the 'startPrice' value to be higher than the previous 'cost'`,
-              });
+              if (!data["endPrice"] && data["startPrice"] >= oldProductData["endPrice"])
+                return res.status(400).send({
+                  error: true,
+                  message: `Please set the 'startPrice' value to be lower than the previous 'endPrice'`,
+                });
+              if (!data["cost"] && data["startPrice"] <= oldProductData["cost"])
+                return res.status(400).send({
+                  error: true,
+                  message: `Please set the 'startPrice' value to be higher than the previous 'cost'`,
+                });
             case "endPrice":
-              if (!data["startPrice"] && data["endPrice"] <= oldProductData["startPrice"]) return res.status(400).send({
-                error: true,
-                message: `Please set the 'endPrice' value to be higher than the previous 'startPrice'`,
-              });
+              if (!data["startPrice"] && data["endPrice"] <= oldProductData["startPrice"])
+                return res.status(400).send({
+                  error: true,
+                  message: `Please set the 'endPrice' value to be higher than the previous 'startPrice'`,
+                });
           }
-        } 
+        }
       }
 
       // Check to use inputted (req.body) or previous data prices
       const priceData = {
-        "cost": (data["cost"]) ? data["cost"] : oldProductData["cost"],
-        "startPrice": (data["startPrice"]) ? data["startPrice"] : oldProductData["startPrice"],
-        "endPrice": (data["endPrice"]) ? data["endPrice"] : oldProductData["endPrice"]
-      }
-      
+        cost: data["cost"] ? data["cost"] : oldProductData["cost"],
+        startPrice: data["startPrice"] ? data["startPrice"] : oldProductData["startPrice"],
+        endPrice: data["endPrice"] ? data["endPrice"] : oldProductData["endPrice"],
+      };
+
       const updatedPriceData = await getOptimalPrice(priceData);
 
       data["optimalPrice"] = updatedPriceData.optimal_price;
