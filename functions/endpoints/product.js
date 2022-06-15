@@ -20,18 +20,24 @@ app.use(authMiddleware);
 // Create Product
 app.post("/", async (req, res) => {
   const data = req.body;
-  const requiredData = ["title", "description", "image", "cost", "startPrice", "endPrice"];
+  const requiredData = [
+    "title", "description", "image", "cost", "startPrice", "endPrice", "categoryId", "brandId"
+  ];
   let missingData;
   let emptyData = [];
+  let invalidNumericData = [];
 
   requiredData.forEach((attr) => {
+    // Check if req.body key/field missing required data
     if (!(attr in data)) {
       missingData = attr;
       return;
     } else {
-      // Check if req.body value empty
+      // Check if req.body value empty for string and zero/negative for number
       if (data[attr] === "") {
         emptyData.push(attr);
+      } else if (data[attr] <= 0) {
+        invalidNumericData.push(attr);
       }
     }
   });
@@ -52,6 +58,40 @@ app.post("/", async (req, res) => {
     return;
   }
 
+  if (invalidNumericData.length > 0) {
+    res.status(400).send({
+      error: true,
+      message: `This property: '${invalidNumericData}' cannot be zero or negative`,
+    });
+    return;
+  }
+
+  // Check whether prices maintains cost < startPrice < endPrice
+  if (data["cost"] >= data["startPrice"]) {
+    res.status(400).send({
+      error: true,
+      message: `Please set the 'startPrice' value to be higher than 'cost'`,
+    });
+    return;
+  } else if (data["startPrice"] >= data["endPrice"]) {
+    res.status(400).send({
+      error: true,
+      message: `Please set the 'endPrice' value to be higher than 'startPrice'`,
+    });
+    return;
+  }
+
+  // Check req.body if there's uneeded data fields
+  for (field in data) {
+    if (!requiredData.includes(field)) {
+      res.status(403).send({
+        error: true,
+        message: `You are not allowed to add '${field}' data to product`,
+      });
+      return;
+    }
+  }
+
   data["createdAt"] = admin.firestore.FieldValue.serverTimestamp();
   data["updatedAt"] = "";
 
@@ -70,7 +110,7 @@ app.post("/", async (req, res) => {
   } catch (error) {
     res.status(404).send({
       error: true,
-      message: `Error creating product: ${error}`,
+      message: `Error creating product`,
     });
   }
 });
@@ -78,15 +118,56 @@ app.post("/", async (req, res) => {
 // Get all Products
 app.get("/", async (req, res) => {
   try {
-    const productsSnapshot = await admin.firestore().collection("products").get();
+    const titleQuery = req.query.title?.toLowerCase();
+    const categoryQuery = req.query.category;
     let products = [];
 
-    productsSnapshot.forEach((doc) => {
-      let productId = doc.id;
-      let productData = doc.data();
+    let productsRef = admin.firestore().collection("products");
+    const productsSnapshot = await productsRef.get();
 
-      products.push({ productId, ...productData });
-    });
+    // Fetch by Queries
+    if (titleQuery && !categoryQuery) {
+      console.log(req.query);
+      productsSnapshot.forEach((doc) => {
+        let docTitle = doc.data().title.toLowerCase();
+
+        if (docTitle.includes(titleQuery)) {
+          let productId = doc.id;
+          let productData = doc.data();
+          products.push({ productId, ...productData });
+        }
+      });
+    } else if (categoryQuery && (!titleQuery)) {
+      console.log(req.query);
+      productsSnapshot.forEach((doc) => {
+        let docCategoryId = doc.data().categoryId;
+
+        if (docCategoryId === categoryQuery) {
+          let productId = doc.id;
+          let productData = doc.data();
+          products.push({ productId, ...productData });
+        }
+      });
+    } else if (categoryQuery && titleQuery) {
+      console.log(req.query);
+      productsSnapshot.forEach((doc) => {
+        let docTitle = doc.data().title.toLowerCase();
+        let docCategoryId = doc.data().categoryId;
+
+        if (docTitle.includes(titleQuery) && docCategoryId === categoryQuery) {
+          let productId = doc.id;
+          let productData = doc.data();
+          products.push({ productId, ...productData });
+        }
+      });
+    } else {
+      productsSnapshot.forEach((doc) => {
+        let productId = doc.id;
+        let productData = doc.data();
+  
+        products.push({ productId, ...productData });
+      });
+    }
 
     res.status(200).send({
       error: false,
@@ -129,44 +210,18 @@ app.get("/:id", async (req, res) => {
   }
 });
 
-// Get specified Product by Title
-app.get("/search/:title", async (req, res) => {
-  try {
-    const productsSnapshot = await admin.firestore().collection("products").get();
-    const productTitle = req.params.title.toLowerCase();
-    let products = [];
-
-    productsSnapshot.forEach((doc) => {
-      let docTitle = doc.data().title.toLowerCase();
-      if (docTitle.includes(productTitle)) {
-        let productId = doc.id;
-        let productData = doc.data();
-
-        products.push({ productId, ...productData });
-      }
-    });
-
-    res.status(200).send({
-      error: false,
-      message: "Products fetched successfully",
-      data: products,
-    });
-  } catch (error) {
-    res.status(404).send({
-      error: true,
-      message: `Error fetching products`,
-    });
-  }
-});
-
 // Update Product
 app.put("/:id", async (req, res) => {
   const data = req.body;
-  const avaliableToUpdateData = ["title", "description", "image", "cost", "startPrice", "endPrice"];
-  const priceData = ["cost", "startPrice", "endPrice"];
-  let isUpdatePrice = false;
+  const updatableData = [
+    "title", "description", "image", "cost", "startPrice", "endPrice", "categoryId", "brandId"
+  ];
+  const updatablePriceData = ["cost", "startPrice", "endPrice"];
+  let ongoingUpdatePrice = [];
   let emptyData = [];
+  let invalidNumericData = [];
 
+  // Check if req.body is empty
   if (isObjectEmpty(data)) {
     res.status(400).send({
       error: true,
@@ -175,23 +230,24 @@ app.put("/:id", async (req, res) => {
     return;
   }
 
+  // Check req.body if there's uneeded data fields
   for (field in data) {
-    if (!avaliableToUpdateData.includes(field)) {
+    if (!updatableData.includes(field)) {
       res.status(403).send({
         error: true,
         message: `You are not allowed to add or change '${field}' data to product`,
       });
       return;
-    } else if (priceData.includes(field)) {
-      isUpdatePrice = true;
+    } else if (data[field] === "") {  // Check req.body value
+      emptyData.push(attr);
+    } else if (data[field] <= 0) {
+      invalidNumericData.push(attr);
+    }
+
+    if (updatablePriceData.includes(field)) { // Check if there's req.body prices update
+      ongoingUpdatePrice.push(field);
     }
   }
-
-  avaliableToUpdateData.forEach((attr) => {
-    if (attr in data && data[attr] === "") {
-      emptyData.push(attr);
-    }
-  });
 
   if (emptyData.length > 0) {
     res.status(400).send({
@@ -201,12 +257,36 @@ app.put("/:id", async (req, res) => {
     return;
   }
 
-  try {
-    const productRef = admin.firestore().collection("products").doc(req.params.id);
-    const productSnapshot = await productRef.get();
-    const productData = productSnapshot.data();
+  if (invalidNumericData.length > 0) {
+    res.status(400).send({
+      error: true,
+      message: `This property: '${invalidNumericData}' cannot be zero or negative`,
+    });
+    return;
+  }
 
-    if (!productData) {
+  // Check whether prices maintains cost < startPrice < endPrice
+  if (data["cost"] >= data["startPrice"]) {
+    res.status(400).send({
+      error: true,
+      message: `Please set the 'startPrice' value to be higher than 'cost'`,
+    });
+    return;
+  } else if (data["startPrice"] >= data["endPrice"]) {
+    res.status(400).send({
+      error: true,
+      message: `Please set the 'endPrice' value to be higher than 'startPrice'`,
+    });
+    return;
+  }
+  
+  try {
+    const oldProductRef = admin.firestore().collection("products").doc(req.params.id);
+    const oldProductSnapshot = await oldProductRef.get();
+    const oldProductData = oldProductSnapshot.data();
+
+    // Check if Product data with param ID exist
+    if (!oldProductData) {
       res.status(404).send({
         error: true,
         message: `No product data to be found`,
@@ -214,17 +294,50 @@ app.put("/:id", async (req, res) => {
       return;
     }
 
-    data["updatedAt"] = admin.firestore.FieldValue.serverTimestamp();
+    if (ongoingUpdatePrice.length > 0) {
+      // Validates ongoing-update prices with previous-old prices whether still maintains cost < startPrice < endPrice
+      if (ongoingUpdatePrice.length <= 2) {
+        for (field in ongoingUpdatePrice) {
+          switch (ongoingUpdatePrice[field]) {
+            case "cost":
+              if (!data["startPrice"] && data["cost"] >= oldProductData["startPrice"]) return res.status(400).send({
+                error: true,
+                message: `Please set the 'cost' value to be lower than the previous 'startPrice'`,
+              });
+            case "startPrice":
+              if (!data["endPrice"] && data["startPrice"] >= oldProductData["endPrice"]) return res.status(400).send({
+                error: true,
+                message: `Please set the 'startPrice' value to be lower than the previous 'endPrice'`,
+              });
+              if (!data["cost"] && data["startPrice"] <= oldProductData["cost"]) return res.status(400).send({
+                error: true,
+                message: `Please set the 'startPrice' value to be higher than the previous 'cost'`,
+              });
+            case "endPrice":
+              if (!data["startPrice"] && data["endPrice"] <= oldProductData["startPrice"]) return res.status(400).send({
+                error: true,
+                message: `Please set the 'endPrice' value to be higher than the previous 'startPrice'`,
+              });
+          }
+        } 
+      }
 
-    if (isUpdatePrice) {
-      const updatedPriceData = await getOptimalPrice(data);
+      // Check to use inputted (req.body) or previous data prices
+      const priceData = {
+        "cost": (data["cost"]) ? data["cost"] : oldProductData["cost"],
+        "startPrice": (data["startPrice"]) ? data["startPrice"] : oldProductData["startPrice"],
+        "endPrice": (data["endPrice"]) ? data["endPrice"] : oldProductData["endPrice"]
+      }
+      
+      const updatedPriceData = await getOptimalPrice(priceData);
 
       data["optimalPrice"] = updatedPriceData.optimal_price;
       data["pricePredictions"] = updatedPriceData.predictions;
     }
 
-    await productRef.update(data);
-    const productUpdated = await productRef.get();
+    data["updatedAt"] = admin.firestore.FieldValue.serverTimestamp();
+    await oldProductRef.update(data);
+    const productUpdated = await oldProductRef.get();
 
     res.status(200).send({
       error: false,
@@ -246,6 +359,7 @@ app.delete("/:id", async (req, res) => {
     const productSnapshot = await productRef.get();
     const productData = productSnapshot.data();
 
+    // Check if Product data with param ID exist
     if (!productData) {
       res.status(404).send({
         error: true,

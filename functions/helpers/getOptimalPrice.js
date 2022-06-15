@@ -3,23 +3,23 @@ const axios = require("axios").default;
 const getUSDToIDRCurrency = require("../helpers/getUSDToIDRCurrency");
 
 // Optimal price ML's model
-const getOptimalPrice = async (productData) => {
+const getOptimalPrice = async (priceData) => {
   try {
     const BASE_URL = process.env.ML_MODEL_URL;
     const ML_MODEL_ENDPOINT = `${BASE_URL}/predict`;
     const currency = await getUSDToIDRCurrency();
 
-    const productPrice = {
-      cost: productData.cost * currency["IDR_USD"],
-      start: productData.startPrice * currency["IDR_USD"],
-      end: productData.endPrice * currency["IDR_USD"],
+    const convertedPrice = {
+      cost: priceData.cost * currency["IDR_USD"],
+      start: priceData.startPrice * currency["IDR_USD"],
+      end: priceData.endPrice * currency["IDR_USD"],
     };
 
     const data = {
-      cost: productPrice.cost,
-      start_price: productPrice.start,
-      end_price: productPrice.end,
-      increment: (productPrice.end - productPrice.start) / 100,
+      cost: convertedPrice.cost,
+      start_price: convertedPrice.start,
+      end_price: convertedPrice.end,
+      increment: (convertedPrice.end - convertedPrice.start) / 100,
     };
 
     const response = await axios({
