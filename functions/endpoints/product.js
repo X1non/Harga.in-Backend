@@ -177,7 +177,7 @@ app.get("/", async (req, res) => {
   } catch (error) {
     res.status(404).send({
       error: true,
-      message: `Error fetching products ${error}`,
+      message: `Error fetching products`,
     });
   }
 });
