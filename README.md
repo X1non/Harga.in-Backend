@@ -57,19 +57,19 @@ These endpoints displays information of every User in the application or specifi
 
 ### Product endpoint
 These endpoints writes, manipulates, or displays Product data which its ID is provided with the request:
-* [Create Product](/) : `POST /products`
-* [Get All Product](/) : `GET /products`
-* [Get Product by ID](/) : `GET /products/:id`
-* [Update Product](/) : `PUT /products/:id`
-* [Delete Product](/) : `DELETE /products/:id`
+* [Create Product](./documentation/product.md#create-product) : `POST /products`
+* [Get All Product](./documentation/product.md#get-all-products) : `GET /products`
+* [Get Product by ID](./documentation/product.md#get-products-by-id) : `GET /products/:id`
+* [Update Product](./documentation/product.md#update-product) : `PUT /products/:id`
+* [Delete Product](./documentation/product.md#delete-product) : `DELETE /products/:id`
 
 ### Category endpoint
 These endpoints writes, manipulates, or displays Category data which its ID is provided with the request:
-* [Create Category](/) : `POST /categories`
-* [Get All Category](/) : `GET /categories`
-* [Get Category by ID](/) : `GET /categories/:id`
-* [Update Category](/) : `PUT /categories/:id`
-* [Delete Category](/) : `DELETE /categories/:id`
+* [Create Category](./documentation/category.md#create-category) : `POST /categories`
+* [Get All Category](./documentation/category.md#get-all-categories) : `GET /categories`
+* [Get Category by ID](./documentation/category.md#get-categories-by-id) : `GET /categories/:id`
+* [Update Category](./documentation/category.md#update-category) : `PUT /categories/:id`
+* [Delete Category](./documentation/category.md#delete-category) : `DELETE /categories/:id`
 
 ### Brand endpoint
 These endpoints writes, manipulates, or displays Brand data which its ID is provided with the request:
