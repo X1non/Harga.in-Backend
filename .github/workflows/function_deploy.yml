@@ -9,6 +9,13 @@ on:
       - staging
     paths:
       - functions/**/*
+      
+  pull_request:
+    branches:
+      - master
+      - staging
+    paths:
+      - functions/**/*
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:          
@@ -33,3 +40,4 @@ jobs:
         
       - name: Deploy firebase functions
         run: firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }}
+        working-directory: functions

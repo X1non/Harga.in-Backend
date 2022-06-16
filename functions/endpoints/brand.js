@@ -3,16 +3,13 @@ const admin = require("firebase-admin");
 const express = require("express");
 const cookieParser = require("cookie-parser")();
 const cors = require("cors")({
-	origin: true,
-	methods: "GET,POST,PUT,DELETE",
-	allowedHeaders: "Authorization",
+  origin: true,
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Authorization",
 });
 const authMiddleware = require("../authMiddleware");
+const isObjectEmpty = require("../helpers/isObjectEmpty");
 const app = express();
-
-const isObjectEmpty = (obj) => {
-	return obj && Object.keys(obj).length === 0 && Object.getPrototypeOf(obj) === Object.prototype;
-};
 
 // Applying CORS, Cookie Parser, and Middleware that validates Firebase ID Token
 app.use(cors);
@@ -41,7 +38,7 @@ app.post("/", async (req, res) => {
 	if (missingData) {
 		res.status(400).send({
 			error: true,
-			message: `Brand needs to have ${missingData} attribute`,
+			message: `Brand needs to have ${missingData} property`,
 		});
 		return;
 	}
@@ -86,56 +83,56 @@ app.post("/", async (req, res) => {
 
 // Get all Brands
 app.get("/", async (req, res) => {
-	try {
-		const brandsSnapshot = await admin.firestore().collection("brands").get();
-		let brands = [];
+  try {
+    const brandsSnapshot = await admin.firestore().collection("brands").get();
+    let brands = [];
 
-		brandsSnapshot.forEach((doc) => {
-			let brandId = doc.id;
-			let brandData = doc.data();
+    brandsSnapshot.forEach((doc) => {
+      let brandId = doc.id;
+      let brandData = doc.data();
 
-			brands.push({ brandId, ...brandData });
-		});
+      brands.push({ brandId, ...brandData });
+    });
 
-		res.status(200).send({
-			error: false,
-			message: "Brands fetched successfully",
-			data: brands,
-		});
-	} catch (error) {
-		res.status(404).send({
-			error: true,
-			message: `Error fetching brands`,
-		});
-	}
+    res.status(200).send({
+      error: false,
+      message: "Brands fetched successfully",
+      data: brands,
+    });
+  } catch (error) {
+    res.status(404).send({
+      error: true,
+      message: `Error fetching brands`,
+    });
+  }
 });
 
 // Get specified Brand by ID
 app.get("/:id", async (req, res) => {
-	try {
-		const brandSnapshot = await admin.firestore().collection("brands").doc(req.params.id).get();
-		const brandId = brandSnapshot.id;
-		const brandData = brandSnapshot.data();
+  try {
+    const brandSnapshot = await admin.firestore().collection("brands").doc(req.params.id).get();
+    const brandId = brandSnapshot.id;
+    const brandData = brandSnapshot.data();
 
-		if (!brandData) {
-			res.status(200).send({
-				error: false,
-				message: "Brand fetched successfully",
-				brand: {},
-			});
-		} else {
-			res.status(200).send({
-				error: false,
-				message: "Brand fetched successfully",
-				data: { id: brandId, ...brandData },
-			});
-		}
-	} catch (error) {
-		res.status(404).send({
-			error: true,
-			message: `Error fetching brand`,
-		});
-	}
+    if (!brandData) {
+      res.status(200).send({
+        error: false,
+        message: "Brand fetched successfully",
+        brand: {},
+      });
+    } else {
+      res.status(200).send({
+        error: false,
+        message: "Brand fetched successfully",
+        data: { id: brandId, ...brandData },
+      });
+    }
+  } catch (error) {
+    res.status(404).send({
+      error: true,
+      message: `Error fetching brand`,
+    });
+  }
 });
 
 // Update Brand
@@ -197,7 +194,6 @@ app.put("/:id", async (req, res) => {
 			data: { id: brandUpdated.id, ...brandUpdated.data() },
 		});
 	} catch (error) {
-		console.log(error);
 		res.status(404).send({
 			error: true,
 			message: `Error updating brand`,
@@ -207,33 +203,33 @@ app.put("/:id", async (req, res) => {
 
 // Delete Brand
 app.delete("/:id", async (req, res) => {
-	try {
-		const brandRef = admin.firestore().collection("brands").doc(req.params.id);
-		const brandSnapshot = await brandRef.get();
-		const brandData = brandSnapshot.data();
+  try {
+    const brandRef = admin.firestore().collection("brands").doc(req.params.id);
+    const brandSnapshot = await brandRef.get();
+    const brandData = brandSnapshot.data();
 
-		if (!brandData) {
-			res.status(404).send({
-				error: true,
-				message: `No brand data to be found`,
-			});
-			return;
-		}
+    if (!brandData) {
+      res.status(404).send({
+        error: true,
+        message: `No brand data to be found`,
+      });
+      return;
+    }
 
-		const brandDeleted = await brandRef.get();
-		await brandRef.delete();
+    const brandDeleted = await brandRef.get();
+    await brandRef.delete();
 
-		res.status(200).send({
-			error: false,
-			message: "Brand deleted successfully",
-			data: { id: brandDeleted.id, ...brandDeleted.data() },
-		});
-	} catch (error) {
-		res.status(404).send({
-			error: true,
-			message: `Error deleting brand`,
-		});
-	}
+    res.status(200).send({
+      error: false,
+      message: "Brand deleted successfully",
+      data: { id: brandDeleted.id, ...brandDeleted.data() },
+    });
+  } catch (error) {
+    res.status(404).send({
+      error: true,
+      message: `Error deleting brand`,
+    });
+  }
 });
 
 exports.app = app;

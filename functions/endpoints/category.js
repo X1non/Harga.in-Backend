@@ -3,16 +3,13 @@ const admin = require("firebase-admin");
 const express = require("express");
 const cookieParser = require("cookie-parser")();
 const cors = require("cors")({
-	origin: true,
-	methods: "GET,POST,PUT,DELETE",
-	allowedHeaders: "Authorization",
+  origin: true,
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Authorization",
 });
 const authMiddleware = require("../authMiddleware");
+const isObjectEmpty = require("../helpers/isObjectEmpty");
 const app = express();
-
-const isObjectEmpty = (obj) => {
-	return obj && Object.keys(obj).length === 0 && Object.getPrototypeOf(obj) === Object.prototype;
-};
 
 // Applying CORS, Cookie Parser, and Middleware that validates Firebase ID Token
 app.use(cors);
@@ -41,7 +38,7 @@ app.post("/", async (req, res) => {
 	if (missingData) {
 		res.status(400).send({
 			error: true,
-			message: `Category needs to have ${missingData} attribute`,
+			message: `Category needs to have ${missingData} property`,
 		});
 		return;
 	}
@@ -94,56 +91,56 @@ app.post("/", async (req, res) => {
 
 // Get all Categories
 app.get("/", async (req, res) => {
-	try {
-		const categoriesSnapshot = await admin.firestore().collection("categories").get();
-		let categories = [];
+  try {
+    const categoriesSnapshot = await admin.firestore().collection("categories").get();
+    let categories = [];
 
-		categoriesSnapshot.forEach((doc) => {
-			let categoryId = doc.id;
-			let categoryData = doc.data();
+    categoriesSnapshot.forEach((doc) => {
+      let categoryId = doc.id;
+      let categoryData = doc.data();
 
-			categories.push({ categoryId, ...categoryData });
-		});
+      categories.push({ categoryId, ...categoryData });
+    });
 
-		res.status(200).send({
-			error: false,
-			message: "Categories fetched successfully",
-			data: categories,
-		});
-	} catch (error) {
-		res.status(404).send({
-			error: true,
-			message: `Error fetching categories`,
-		});
-	}
+    res.status(200).send({
+      error: false,
+      message: "Categories fetched successfully",
+      data: categories,
+    });
+  } catch (error) {
+    res.status(404).send({
+      error: true,
+      message: `Error fetching categories`,
+    });
+  }
 });
 
 // Get specified Category by ID
 app.get("/:id", async (req, res) => {
-	try {
-		const categorySnapshot = await admin.firestore().collection("categories").doc(req.params.id).get();
-		const categoryId = categorySnapshot.id;
-		const categoryData = categorySnapshot.data();
+  try {
+    const categorySnapshot = await admin.firestore().collection("categories").doc(req.params.id).get();
+    const categoryId = categorySnapshot.id;
+    const categoryData = categorySnapshot.data();
 
-		if (!categoryData) {
-			res.status(200).send({
-				error: false,
-				message: "Category fetched successfully",
-				data: {},
-			});
-		} else {
-			res.status(200).send({
-				error: false,
-				message: "Category fetched successfully",
-				data: { id: categoryId, ...categoryData },
-			});
-		}
-	} catch (error) {
-		res.status(404).send({
-			error: true,
-			message: `Error fetching category`,
-		});
-	}
+    if (!categoryData) {
+      res.status(200).send({
+        error: false,
+        message: "Category fetched successfully",
+        data: {},
+      });
+    } else {
+      res.status(200).send({
+        error: false,
+        message: "Category fetched successfully",
+        data: { id: categoryId, ...categoryData },
+      });
+    }
+  } catch (error) {
+    res.status(404).send({
+      error: true,
+      message: `Error fetching category`,
+    });
+  }
 });
 
 // Update Category
@@ -205,7 +202,6 @@ app.put("/:id", async (req, res) => {
 			data: { id: categoryUpdated.id, ...categoryUpdated.data() },
 		});
 	} catch (error) {
-		console.log(error);
 		res.status(404).send({
 			error: true,
 			message: `Error updating category`,
@@ -215,33 +211,33 @@ app.put("/:id", async (req, res) => {
 
 // Delete Category
 app.delete("/:id", async (req, res) => {
-	try {
-		const categoryRef = admin.firestore().collection("categories").doc(req.params.id);
-		const categorySnapshot = await categoryRef.get();
-		const categoryData = categorySnapshot.data();
+  try {
+    const categoryRef = admin.firestore().collection("categories").doc(req.params.id);
+    const categorySnapshot = await categoryRef.get();
+    const categoryData = categorySnapshot.data();
 
-		if (!categoryData) {
-			res.status(404).send({
-				error: true,
-				message: `No category data to be found`,
-			});
-			return;
-		}
+    if (!categoryData) {
+      res.status(404).send({
+        error: true,
+        message: `No category data to be found`,
+      });
+      return;
+    }
 
-		const categoryDeleted = await categoryRef.get();
-		await categoryRef.delete();
+    const categoryDeleted = await categoryRef.get();
+    await categoryRef.delete();
 
-		res.status(200).send({
-			error: false,
-			message: "Category deleted successfully",
-			data: { id: categoryDeleted.id, ...categoryDeleted.data() },
-		});
-	} catch (error) {
-		res.status(404).send({
-			error: true,
-			message: `Error deleting category`,
-		});
-	}
+    res.status(200).send({
+      error: false,
+      message: "Category deleted successfully",
+      data: { id: categoryDeleted.id, ...categoryDeleted.data() },
+    });
+  } catch (error) {
+    res.status(404).send({
+      error: true,
+      message: `Error deleting category`,
+    });
+  }
 });
 
 exports.app = app;
