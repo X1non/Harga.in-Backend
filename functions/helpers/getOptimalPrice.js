@@ -1,18 +1,21 @@
-// require("dotenv").config();
+const admin = require("firebase-admin");
 const axios = require("axios").default;
 const getUSDToIDRCurrency = require("../helpers/getUSDToIDRCurrency");
 
 // Optimal price ML's model
-const getOptimalPrice = async (priceData) => {
+const getOptimalPrice = async (priceCost, category) => {
+  const priceLimitSnapshot = await admin.firestore().collection("constants").doc("priceLimit").get();
+  const priceLimit = priceLimitSnapshot.data();
+
   try {
     const BASE_URL = process.env.ML_MODEL_URL;
     const ML_MODEL_ENDPOINT = `${BASE_URL}/predict`;
     const currency = await getUSDToIDRCurrency();
 
     const convertedPrice = {
-      cost: priceData.cost * currency["IDR_USD"],
-      start: priceData.startPrice * currency["IDR_USD"],
-      end: priceData.endPrice * currency["IDR_USD"],
+      cost: priceCost * currency["IDR_USD"],
+      start: priceCost * (priceLimit ? priceLimit.start : 1.15) * currency["IDR_USD"],
+      end: priceCost * (priceLimit ? priceLimit.end : 1.5) * currency["IDR_USD"],
     };
 
     const data = {
@@ -20,6 +23,7 @@ const getOptimalPrice = async (priceData) => {
       start_price: convertedPrice.start,
       end_price: convertedPrice.end,
       increment: (convertedPrice.end - convertedPrice.start) / 100,
+      category: category
     };
 
     const response = await axios({
