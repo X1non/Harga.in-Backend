@@ -49,10 +49,21 @@ app.post("/", async (req, res) => {
 	if (emptyData.length > 0) {
 		res.status(400).send({
 			error: true,
-			message: `This requred property: ${emptyData} cannot be empty`,
+			message: `This property: '${emptyData}' cannot be empty`,
 		});
 		return;
 	}
+
+	for (field in data) {
+    // Check req.body if there's uneeded data fields
+    if (!requiredData.includes(field)) {
+      res.status(403).send({
+        error: true,
+        message: `You are not allowed to add '${field}' data to brand`,
+      });
+      return;
+    }
+  }
 
 	data["createdAt"] = admin.firestore.FieldValue.serverTimestamp();
 	data["updatedAt"] = "";
@@ -130,14 +141,8 @@ app.get("/:id", async (req, res) => {
 // Update Brand
 app.put("/:id", async (req, res) => {
 	const data = req.body;
-	const requiredData = ["name"];
+	const updatableData = ["name"];
 	let emptyData = [];
-
-	requiredData.forEach((attr) => {
-		if (attr in data && data[attr] === "") {
-			emptyData.push(attr);
-		}
-	});
 
 	if (isObjectEmpty(data)) {
 		res.status(400).send({
@@ -147,10 +152,23 @@ app.put("/:id", async (req, res) => {
 		return;
 	}
 
+	// Validate data that's going to be updated
+	for (field in data) {
+		if (!updatableData.includes(field)) {
+			res.status(403).send({
+				error: true,
+				message: `You are not allowed to add or change '${field}' data to brand`,
+			});
+			return;
+		} else if (data[field] === "") {
+			emptyData.push(attr);
+		}
+	}
+
 	if (emptyData.length > 0) {
 		res.status(400).send({
 			error: true,
-			message: `This requred property: ${emptyData} cannot be empty`,
+			message: `This property: '${emptyData}' cannot be empty`,
 		});
 		return;
 	}
