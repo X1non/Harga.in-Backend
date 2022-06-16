@@ -89,6 +89,8 @@ app.post("/", async (req, res) => {
 
   try {
     const calculatedPrice = await getOptimalPrice(data["cost"], data["categoryId"]);
+    data["startPrice"] = calculatedPrice.start_price;
+    data["endPrice"] = calculatedPrice.end_price;
     data["optimalPrice"] = calculatedPrice.optimal_price;
     data["pricePredictions"] = calculatedPrice.predictions;
 
@@ -302,6 +304,8 @@ app.put("/:id", async (req, res) => {
 
       const updatedPriceData = await getOptimalPrice(cost, category);
 
+      data["startPrice"] = updatedPriceData.start_price;
+      data["endPrice"] = updatedPriceData.end_price;
       data["optimalPrice"] = updatedPriceData.optimal_price;
       data["pricePredictions"] = updatedPriceData.predictions;
     }
