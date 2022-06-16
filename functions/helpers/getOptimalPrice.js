@@ -72,6 +72,10 @@ const getOptimalPrice = async (priceCost, category) => {
         }
       }
 
+      // add system-defined startPrice and endPrice to be returned
+      predictResult["start_price"] = convertedPrice["start"] * currency["USD_IDR"];
+      predictResult["end_price"] = convertedPrice["end"] * currency["USD_IDR"];
+
       return predictResult;
     }
   } catch (error) {
