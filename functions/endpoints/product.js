@@ -27,8 +27,6 @@ app.post("/", async (req, res) => {
     "image",
     "cost",
     "currentPrice",
-    "startPrice",
-    "endPrice",
     "categoryId",
     "brandId",
   ];
@@ -75,23 +73,8 @@ app.post("/", async (req, res) => {
     return;
   }
 
-  // Check whether prices maintains cost < startPrice < endPrice
-  if (data["cost"] >= data["startPrice"]) {
-    res.status(400).send({
-      error: true,
-      message: `Please set the 'startPrice' value to be higher than 'cost'`,
-    });
-    return;
-  } else if (data["startPrice"] >= data["endPrice"]) {
-    res.status(400).send({
-      error: true,
-      message: `Please set the 'endPrice' value to be higher than 'startPrice'`,
-    });
-    return;
-  }
-
-  // Check req.body if there's uneeded data fields
   for (field in data) {
+    // Check req.body if there's uneeded data fields
     if (!requiredData.includes(field)) {
       res.status(403).send({
         error: true,
@@ -105,7 +88,7 @@ app.post("/", async (req, res) => {
   data["updatedAt"] = "";
 
   try {
-    const calculatedPrice = await getOptimalPrice(data);
+    const calculatedPrice = await getOptimalPrice(data["cost"], data["categoryId"]);
     data["optimalPrice"] = calculatedPrice.optimal_price;
     data["pricePredictions"] = calculatedPrice.predictions;
 
@@ -249,14 +232,10 @@ app.put("/:id", async (req, res) => {
     "image",
     "cost",
     "currentPrice",
-    "startPrice",
-    "endPrice",
     "categoryId",
     "brandId",
   ];
 
-  const updatablePriceData = ["cost", "startPrice", "endPrice"];
-  let ongoingUpdatePrice = [];
   let emptyData = [];
   let invalidNumericData = [];
 
@@ -269,24 +248,19 @@ app.put("/:id", async (req, res) => {
     return;
   }
 
-  // Check req.body if there's uneeded data fields
+  // Validate data that's going to be updated
   for (field in data) {
+    // Check req.body if there's uneeded data fields
     if (!updatableData.includes(field)) {
       res.status(403).send({
         error: true,
         message: `You are not allowed to add or change '${field}' data to product`,
       });
       return;
-    } else if (data[field] === "") {
-      // Check req.body value
+    } else if (data[field] === "") { // Check req.body empty string 
       emptyData.push(attr);
-    } else if (data[field] <= 0) {
+    } else if (data[field] <= 0) {  // Check req.body zero or negative number
       invalidNumericData.push(attr);
-    }
-
-    if (updatablePriceData.includes(field)) {
-      // Check if there's req.body prices update
-      ongoingUpdatePrice.push(field);
     }
   }
 
@@ -306,21 +280,6 @@ app.put("/:id", async (req, res) => {
     return;
   }
 
-  // Check whether prices maintains cost < startPrice < endPrice
-  if (data["cost"] >= data["startPrice"]) {
-    res.status(400).send({
-      error: true,
-      message: `Please set the 'startPrice' value to be higher than 'cost'`,
-    });
-    return;
-  } else if (data["startPrice"] >= data["endPrice"]) {
-    res.status(400).send({
-      error: true,
-      message: `Please set the 'endPrice' value to be higher than 'startPrice'`,
-    });
-    return;
-  }
-
   try {
     const oldProductRef = admin.firestore().collection("products").doc(req.params.id);
     const oldProductSnapshot = await oldProductRef.get();
@@ -335,46 +294,13 @@ app.put("/:id", async (req, res) => {
       return;
     }
 
-    if (ongoingUpdatePrice.length > 0) {
-      // Validates ongoing-update prices with previous-old prices whether still maintains cost < startPrice < endPrice
-      if (ongoingUpdatePrice.length <= 2) {
-        for (field in ongoingUpdatePrice) {
-          switch (ongoingUpdatePrice[field]) {
-            case "cost":
-              if (!data["startPrice"] && data["cost"] >= oldProductData["startPrice"])
-                return res.status(400).send({
-                  error: true,
-                  message: `Please set the 'cost' value to be lower than the previous 'startPrice'`,
-                });
-            case "startPrice":
-              if (!data["endPrice"] && data["startPrice"] >= oldProductData["endPrice"])
-                return res.status(400).send({
-                  error: true,
-                  message: `Please set the 'startPrice' value to be lower than the previous 'endPrice'`,
-                });
-              if (!data["cost"] && data["startPrice"] <= oldProductData["cost"])
-                return res.status(400).send({
-                  error: true,
-                  message: `Please set the 'startPrice' value to be higher than the previous 'cost'`,
-                });
-            case "endPrice":
-              if (!data["startPrice"] && data["endPrice"] <= oldProductData["startPrice"])
-                return res.status(400).send({
-                  error: true,
-                  message: `Please set the 'endPrice' value to be higher than the previous 'startPrice'`,
-                });
-          }
-        }
-      }
-
+    // Trigger the ML model computation if there are changes on these data
+    if (data["cost"] || data["categoryId"]) {
       // Check to use inputted (req.body) or previous data prices
-      const priceData = {
-        cost: data["cost"] ? data["cost"] : oldProductData["cost"],
-        startPrice: data["startPrice"] ? data["startPrice"] : oldProductData["startPrice"],
-        endPrice: data["endPrice"] ? data["endPrice"] : oldProductData["endPrice"],
-      };
+      const cost = data["cost"] ? data["cost"] : oldProductData["cost"];
+      const category = data["categoryId"] ? data["categoryId"] : oldProductData["categoryId"];
 
-      const updatedPriceData = await getOptimalPrice(priceData);
+      const updatedPriceData = await getOptimalPrice(cost, category);
 
       data["optimalPrice"] = updatedPriceData.optimal_price;
       data["pricePredictions"] = updatedPriceData.predictions;
