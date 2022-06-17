@@ -19,7 +19,7 @@ app.use(authMiddleware);
 // Create Category
 app.post("/", async (req, res) => {
   const data = req.body;
-  const requiredData = ["name"];
+  const requiredData = ["name", "mapNumber"];
   let missingData;
   let emptyData = [];
 
@@ -51,11 +51,30 @@ app.post("/", async (req, res) => {
     return;
   }
 
+  if (Number(data["mapNumber"]) === NaN) {
+    res.status(400).send({
+      error: true,
+      message: `Please set 'mapNumber' to a string of number`,
+    });
+    return;
+  }
+
+  for (field in data) {
+    // Check req.body if there's uneeded data fields
+    if (!requiredData.includes(field)) {
+      res.status(403).send({
+        error: true,
+        message: `You are not allowed to add '${field}' data to category`,
+      });
+      return;
+    }
+  }
+
   data["createdAt"] = admin.firestore.FieldValue.serverTimestamp();
   data["updatedAt"] = "";
 
   try {
-    const createdCategoryRef = await admin.firestore().collection("categories").add(data);
+    const createdCategoryRef = await admin.firestore().collection("categories").doc(data["mapNumber"]).set(data);
     const createdCategory = await createdCategoryRef.get();
     res.status(201).send({
       error: false,
@@ -127,14 +146,8 @@ app.get("/:id", async (req, res) => {
 // Update Category
 app.put("/:id", async (req, res) => {
   const data = req.body;
-  const requiredData = ["name"];
+  const updatableData = ["name"];
   let emptyData = [];
-
-  requiredData.forEach((attr) => {
-    if (attr in data && data[attr] === "") {
-      emptyData.push(attr);
-    }
-  });
 
   if (isObjectEmpty(data)) {
     res.status(400).send({
@@ -142,6 +155,19 @@ app.put("/:id", async (req, res) => {
       message: `There's no data provided`,
     });
     return;
+  }
+
+  // Validate data that's going to be updated
+  for (field in data) {
+    if (!updatableData.includes(field)) {
+      res.status(403).send({
+        error: true,
+        message: `You are not allowed to add or change '${field}' data to category`,
+      });
+      return;
+    } else if (data[field] === "") {
+      emptyData.push(attr);
+    }
   }
 
   if (emptyData.length > 0) {
