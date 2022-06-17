@@ -14,6 +14,7 @@ Writes Category data  the ID provided by Firebase, only if the Category haven't 
 ```json
 {
     "name": "string"
+    "mapNumber": "string of number"
 }
 ```
 
@@ -22,6 +23,7 @@ Writes Category data  the ID provided by Firebase, only if the Category haven't 
 ```json
 {
     "name": "Snack",
+    "mapNumber": 0
 }
 ```
 
@@ -36,7 +38,7 @@ Writes Category data  the ID provided by Firebase, only if the Category haven't 
     "error": false,
     "message": "Category successfully created",
     "data": {
-        "id": "VmKvjKNMlUPXMz4e0pBE",
+        "id": "0",
         "updatedAt": "",
         "createdAt": {
             "_seconds": 1654271881,
@@ -48,9 +50,56 @@ Writes Category data  the ID provided by Firebase, only if the Category haven't 
 ```
 
 ### Error Response
-  
-- If error occured with the Category creation.
 
+- If Category didn't provide required property in the request body.
+  - **Code** : `400 Bad Request`
+
+  - **Example**
+
+  ```json
+  {
+      "error": true,
+      "message": "Category needs to have [requiredData] property",
+  }
+  ```
+
+- If required data/property value is empty.
+  - **Code** : `400 Bad Request`
+
+  - **Example**
+
+  ```json
+  {
+      "error": true,
+      "message": "This property: '[requiredData]' cannot be empty",
+  }
+  ```
+  
+- If `mapNumber` attribute is not a string of number
+  - **Code** : `404 Not Found`
+
+  - **Example**
+  
+   ```json
+  {
+      "error": true,
+      "message": "Please set 'mapNumber' to a string of number",
+  }
+  ```
+   
+- If there's uneeded data fields.
+  - **Code** : `403 Forbidden`
+
+  - **Example**
+
+   ```json
+   {
+       "error": true,
+       "message": "You are not allowed to add or change '${field}' data to product",
+   }
+   ```
+   
+- If error occured with the Category creation.
   - **Code** : `404 Not Found`
 
   - **Example**
@@ -61,6 +110,10 @@ Writes Category data  the ID provided by Firebase, only if the Category haven't 
       "message": "Error creating category",
   }
   ```
+
+### Notes
+- ID of Category is determined by `mapNumber` attribute. It's required to be a string of number because it involves with the Machine Learning model input that's need to be mapped from number to the actual category.
+- Since Category data involves with the Machine Learning model computation, this endpoint should only be used if there's additional category for the ML model.
 
 ## Get All Categories
 
@@ -84,7 +137,7 @@ Get the details of the every Category in the application.
     "message": "Categories fetched successfully",
     "data": [
         {
-            "categoryId": "HEyt00tnUgyk4xEnH9RL",
+            "categoryId": "1",
             "name": "Phone",
             "createdAt": {
                 "_seconds": 1654271800,
@@ -127,14 +180,14 @@ Get the details of the authenticated Category in the application whose its ID pr
 
 **Example**
 
-A Category with ID `oWLkLnvfQUFGBUVYDZX8` that registered on the database with every information the Category has saved.
+A Category with ID `2` that registered on the database with every information the Category has saved.
 
 ```json
 {
     "error": false,
     "message": "Category fetched successfully",
     "data": {
-        "id": "oWLkLnvfQUFGBUVYDZX8",
+        "id": "2",
         "updatedAt": {
             "_seconds": 1654272173,
             "_nanoseconds": 825000000
@@ -201,8 +254,8 @@ Update Category data in the database with the ID provided by Firebase.
     "error": false,
     "message": "Category updated successfully",
     "data": {
-        "id": "oWLkLnvfQUFGBUVYDZX8",
-        "name": "Baby & Kids",
+        "id": "2",
+        "name": "Baby and Kids",
         "createdAt": {
             "_seconds": 1654271831,
             "_nanoseconds": 181000000
@@ -216,7 +269,7 @@ Update Category data in the database with the ID provided by Firebase.
 ```
 ### Error Response
 - If request body empty.
-- If Product didn't provide required property in the request body.
+- If Category didn't provide required property in the request body.
 - If required data/property value is empty.
 
   - **Code** : `400 Bad Request`
@@ -273,7 +326,7 @@ Delete Category data from the database with the ID provided by Firebase.
     "error": false,
     "message": "Category deleted successfully",
     "data": {
-        "id": "VmKvjKNMlUPXMz4e0pBE",
+        "id": "0",
         "updatedAt": "",
         "createdAt": {
             "_seconds": 1654271881,
