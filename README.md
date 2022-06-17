@@ -12,6 +12,7 @@ Harga.in is a **Smart Engine / Pricing Optimization** platform. This platform us
 - Tech Stack
 - API Documentation
 - Other Related Repository
+- Reference/External Resources
 
 ## Collaborator
 **Google Bangkit 2022 Company-Based Capstone Project from Harga.In Team**  
@@ -81,4 +82,8 @@ These endpoints writes, manipulates, or displays Brand data which its ID is prov
 
 ## Other Related Repository
 - [Machine Learning](https://github.com/kevindharmawan/hargain-model)
-- Mobile Development: TBA
+- [Mobile Development](https://github.com/rizqitsani/harga.in)
+
+## References/External Resources
+- [External API for Currency Rates](https://www.currencyconverterapi.com/)
+- [API Documentation Template](https://github.com/jamescooke/restapidocs/tree/master/examples)
