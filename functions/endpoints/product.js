@@ -30,9 +30,12 @@ app.post("/", async (req, res) => {
     "categoryId",
     "brandId",
   ];
+  const pricesData = ["cost", "currentPrice"];
+  const stringOfNumberData = ["categoryId"];
   let missingData;
   let emptyData = [];
   let invalidNumericData = [];
+  let invalidStringOfNumData = [];
 
   requiredData.forEach((attr) => {
     // Check if req.body key/field missing required data
@@ -40,11 +43,14 @@ app.post("/", async (req, res) => {
       missingData = attr;
       return;
     } else {
-      // Check if req.body value empty for string and zero/negative for number
+      // Check if req.body value empty for string, zero/negative number for prices data,
+      // and data with string type that's need to be represented as number
       if (data[attr] === "") {
         emptyData.push(attr);
-      } else if (data[attr] <= 0) {
+      } else if (attr in pricesData && data[attr] <= 0) { 
         invalidNumericData.push(attr);
+      } else if (attr in stringOfNumberData && Number(data[attr]) === NaN) {
+        invalidStringOfNumData.push(attr);
       }
     }
   });
@@ -69,6 +75,14 @@ app.post("/", async (req, res) => {
     res.status(400).send({
       error: true,
       message: `This property: '${invalidNumericData}' cannot be zero or negative`,
+    });
+    return;
+  }
+
+  if (invalidStringOfNumData.length > 0) {
+    res.status(400).send({
+      error: true,
+      message: `This property: '${invalidStringOfNumData}' should be represented as string of number`,
     });
     return;
   }
@@ -134,7 +148,6 @@ app.get("/", async (req, res) => {
 
     // Fetch by Queries
     if (titleQuery && !categoryQuery) {
-      console.log(req.query);
       productsSnapshot.forEach((doc) => {
         let docTitle = doc.data().title.toLowerCase();
 
@@ -147,7 +160,6 @@ app.get("/", async (req, res) => {
         }
       });
     } else if (categoryQuery && !titleQuery) {
-      console.log(req.query);
       productsSnapshot.forEach((doc) => {
         let docCategoryId = doc.data().categoryId;
 
@@ -160,7 +172,6 @@ app.get("/", async (req, res) => {
         }
       });
     } else if (categoryQuery && titleQuery) {
-      console.log(req.query);
       productsSnapshot.forEach((doc) => {
         let docTitle = doc.data().title.toLowerCase();
         let docCategoryId = doc.data().categoryId;
@@ -237,9 +248,11 @@ app.put("/:id", async (req, res) => {
     "categoryId",
     "brandId",
   ];
-
+  const pricesData = ["cost", "currentPrice"];
+  const stringOfNumberData = ["categoryId"];
   let emptyData = [];
   let invalidNumericData = [];
+  let invalidStringOfNumData = [];
 
   // Check if req.body is empty
   if (isObjectEmpty(data)) {
@@ -261,8 +274,10 @@ app.put("/:id", async (req, res) => {
       return;
     } else if (data[field] === "") { // Check req.body empty string 
       emptyData.push(attr);
-    } else if (data[field] <= 0) {  // Check req.body zero or negative number
+    } else if (field in pricesData && data[field] <= 0) {  // Check req.body zero or negative number for prices data
       invalidNumericData.push(attr);
+    } else if (attr in stringOfNumberData && Number(data[attr]) === NaN) { // Check for data with string type that's need to be represented as number
+      invalidStringOfNumData.push(attr);
     }
   }
 
@@ -278,6 +293,14 @@ app.put("/:id", async (req, res) => {
     res.status(400).send({
       error: true,
       message: `This property: '${invalidNumericData}' cannot be zero or negative`,
+    });
+    return;
+  }
+
+  if (invalidStringOfNumData.length > 0) {
+    res.status(400).send({
+      error: true,
+      message: `This property: '${invalidStringOfNumData}' should be represented as string of number`,
     });
     return;
   }
