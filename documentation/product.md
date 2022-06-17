@@ -14,13 +14,12 @@ Writes Product data  the ID provided by Firebase, only if the Product haven't re
 ```json
 {
     "title": "string",
-    "description": "Pstring",
+    "description": "string",
     "image": "file",
     "brandId": "string",
-    "categoryId": "string",
+    "categoryId": "string (of number)",
     "cost": "number",
-    "startPrice": "number",
-    "endPrice": "number"
+    "currentPrice": "number"
 }
 ```
 
@@ -31,11 +30,10 @@ Writes Product data  the ID provided by Firebase, only if the Product haven't re
     "title": "Product Z",
     "description": "Product Z description",
     "image": "this-image",
-    "brandId": "b1",
-    "categoryId": "c1",
+    "brandId": "0",
+    "categoryId": "0",
     "cost": 10000,
-    "startPrice": 14000,
-    "endPrice": 30000
+    "currentPrice": 11000
 }
 ```
 
@@ -64,14 +62,15 @@ Writes Product data  the ID provided by Firebase, only if the Product haven't re
                 "total_profit": 15527.625360871141,
                 "selling_price": 13999.99853
             },
-            
+            ...
         ],
         "cost": 10000,
+        "currentPrice": 11000
         "endPrice": 30000,
         "optimalPrice": 29839.996866800102,
-        "categoryId": "c1",
+        "categoryId": "0",
         "updatedAt": "",
-        "brandId": "b1",
+        "brandId": "0",
         "startPrice": 14000
     }
 }
@@ -80,11 +79,6 @@ Writes Product data  the ID provided by Firebase, only if the Product haven't re
 ### Error Response
 
 - If Product didn't provide required property in the request body.
-- If required data/property value is empty.
-- If request value contains zero/negative for number.
-- if "cost" >= "startPrice" .
-- if "startPrice" >= "endPrice".
-
   - **Code** : `400 Bad Request`
 
   - **Example**
@@ -92,11 +86,47 @@ Writes Product data  the ID provided by Firebase, only if the Product haven't re
   ```json
   {
       "error": true,
-      "message": "message about error",
+      "message": "Product needs to have [requiredData] property",
   }
   ```
   
-- if there's uneeded data fields.
+- If required data/property value is empty.
+  - **Code** : `400 Bad Request`
+
+  - **Example**
+
+  ```json
+  {
+      "error": true,
+      "message": "This property: '[requiredData]' cannot be empty",
+  }
+  ```
+  
+- If request value contains zero/negative for number.
+  - **Code** : `400 Bad Request`
+
+  - **Example**
+
+  ```json
+  {
+      "error": true,
+      "message": "This property: '[requiredNumericData]' cannot be zero or negative",
+  }
+  ```
+  
+- If there's required "string of number" data value is NaN.
+  - **Code** : `400 Bad Request`
+
+  - **Example**
+
+  ```json
+  {
+      "error": true,
+      "message": "This property: '${invalidStringOfNumData}' should be represented as string of number",
+  }
+  ```
+  
+- If there's uneeded data fields.
   - **Code** : `403 Forbidden`
 
   - **Example**
@@ -109,7 +139,6 @@ Writes Product data  the ID provided by Firebase, only if the Product haven't re
   ```
   
 - If other error occured with the Product creation.
-
   - **Code** : `404 Not Found`
 
   - **Example**
@@ -120,12 +149,23 @@ Writes Product data  the ID provided by Firebase, only if the Product haven't re
       "message": "Error creating product",
   }
   ```
+  
+### Notes
+- Returned attribute `startPrice` and `endPrice` are system-defined by some constant times the `cost` attribute of the Product.
+- Returned attribute `optimalPrice` and `pricePredictions` are system-defined by the Machine Learning model computation.
+- Attribute `categoryId` should be representated as string of number.
 
 ## Get All Products
 
 Get the details of the every Product in the application.
 
-**URL** : `/products`
+**URL** : `/products?title=&category=`
+
+In this endpoint, you can provide the following query (optional) to filter/narrow down the products you want to get.
+| Parameter | Type | Description |
+|:----------|:-----|:------------|
+|title|string|Name of the products you want to get|
+|category|string|Specific category (id) of the products|
 
 **Method** : `GET`
 
@@ -150,10 +190,14 @@ Get the details of the every Product in the application.
                     "total_profit": 19221.164938202182,
                     "selling_price": 4999.999475
                 },
+                ...
             ],
-            "brandId": "1DHAfRYahJZxa3W8qB4m",
+            "brand": {
+                "id": "0",
+                "name": "Dennis"
+            },
             "title": "Sweet Latte",
-            "image": "https://firebasestorage.googleapis.com/v0/b/hargain-f7a81.appspot.com/o/images%2F05c226af-6d33-4f7e-8c52-820f3b3bf573.jpg?alt=media&token=a57ccf0a-c485-46ad-b6ef-cec39ec044a8",
+            "image": "https://hosted-image.com/images%random-image.jpg?alt=media&token=randomized-token",
             "endPrice": 10000,
             "createdAt": {
                 "_seconds": 1654941781,
@@ -163,10 +207,14 @@ Get the details of the every Product in the application.
             "startPrice": 5000,
             "cost": 50,
             "description": "oke",
-            "currentPrice": 100,
+            "currentPrice": 11000,
             "updatedAt": "",
-            "categoryId": "HEyt00tnUgyk4xEnH9RL"
+            "category": {
+                "id": "0",
+                "name": "Phone"
+            }
         },
+        ...
     ]
 }
 ```
@@ -184,7 +232,7 @@ Get the details of the every Product in the application.
 ```
 
 ### Notes
---
+- The query parameters are optional and if its undefined or provided with empty string, it would assume the request without those query parameters.
 
 ## Get Products by ID
 
@@ -212,7 +260,7 @@ A Product with ID `41Bgw6v9ibyahmaHn8fQ` that registered on the database with ev
         "id": "41Bgw6v9ibyahmaHn8fQ",
         "updatedAt": "",
         "description": "oke",
-        "image": "https://firebasestorage.googleapis.com/v0/b/hargain-f7a81.appspot.com/o/images%2F05c226af-6d33-4f7e-8c52-820f3b3bf573.jpg?alt=media&token=a57ccf0a-c485-46ad-b6ef-cec39ec044a8",
+        "image": "https://hosted-image.com/images%random-image.jpg?alt=media&token=randomized-token",
         "endPrice": 10000,
         "pricePredictions": [
             {
@@ -220,6 +268,7 @@ A Product with ID `41Bgw6v9ibyahmaHn8fQ` that registered on the database with ev
                 "total_profit": 19221.164938202182,
                 "selling_price": 4999.999475
             },
+            ...
         ],
         "createdAt": {
             "_seconds": 1654941781,
@@ -227,22 +276,22 @@ A Product with ID `41Bgw6v9ibyahmaHn8fQ` that registered on the database with ev
         },
         "startPrice": 5000,
         "title": "Sweet Latte",
-        "currentPrice": 100,
+        "currentPrice": 11000,
         "optimalPrice": 9949.998955250023,
         "cost": 50,
         "category": {
-            "id": "HEyt00tnUgyk4xEnH9RL",
+            "id": "0",
             "name": "Phone"
         },
         "brand": {
-            "id": "1DHAfRYahJZxa3W8qB4m",
+            "id": "0",
             "name": "Dennis"
         }
     }
 }
 ```
 
-if Product on the database is empty.
+If Product on the database is empty.
 
 ```json
 {
@@ -280,9 +329,22 @@ Update Product data in the database with the ID provided by Firebase.
 **Request Body**
 ```json
 {
+    "title": "string",
+    "description": "string",
+    "image": "string",
     "cost": "number",
-    "startPrice": "number",
-    "endPrice": "number"
+    "currentPrice": "number",
+    "categoryId": "string (of number)",
+    "brandId": "string",
+}
+```
+
+**Example**
+
+Product with ID of `41Bgw6v9ibyahmaHn8fQ` wants its `title` to be changed to `Sweeter Latte`.
+```json
+{
+    "title": "Sweeter Latte"
 }
 ```
 
@@ -297,25 +359,44 @@ Update Product data in the database with the ID provided by Firebase.
     "error": false,
     "message": "Product updated successfully",
     "data": {
-        "id": "QU4k5izZzG8zxWdgPOz8",
-        "title": "Updated Product 1",
-        "currentPrice": 10000,
-        "brandId": "b1",
-        "categoryId": "c1",
+        "id": "41Bgw6v9ibyahmaHn8fQ",
         "updatedAt": {
-            "_seconds": 1654251903,
+            "_seconds": 1654971903,
             "_nanoseconds": 686000000
         },
+        "description": "oke",
+        "image": "https://hosted-image.com/images%random-image.jpg?alt=media&token=randomized-token",
+        "endPrice": 10000,
+        "pricePredictions": [
+            {
+                "total_sales": 3.883064031600952,
+                "total_profit": 19221.164938202182,
+                "selling_price": 4999.999475
+            },
+            ...
+        ],
         "createdAt": {
-            "_seconds": 1654251787,
-            "_nanoseconds": 547000000
+            "_seconds": 1654941781,
+            "_nanoseconds": 170000000
         },
-        "optimalPrice": null,
-        "description": "Updated Product 1 description"
+        "startPrice": 5000,
+        "title": "Sweeter Latte",
+        "currentPrice": 11000,
+        "optimalPrice": 9949.998955250023,
+        "cost": 50,
+        "category": {
+            "id": "0",
+            "name": "Phone"
+        },
+        "brand": {
+            "id": "0",
+            "name": "Dennis"
+        }
     }
 }
 ```
 ### Error Response
+
 - If there's uneeded data fields.
   - **Code** : `403 Forbidden`
 
@@ -327,7 +408,23 @@ Update Product data in the database with the ID provided by Firebase.
       "message": "You are not allowed to add or change '${field}' data to product",
   }
   ```
-- other errors are the same as the error when creating product.
+  
+- If other error occured with updating the Product.
+  - **Code** : `404 Not Found`
+
+  - **Example**
+
+  ```json
+  {
+      "error": true,
+      "message": "Error updating product",
+  }
+  ```
+     
+- Other errors are the same as the error when creating product (didn't provide required property, required data/property value is empty, request value contains zero/negative for number, required "string of number" data value is NaN).
+
+### Notes
+--
 
 ## Delete Product
 
@@ -350,21 +447,33 @@ Delete Product data from the database with the ID provided by Firebase.
     "error": false,
     "message": "Product deleted successfully",
     "data": {
-        "id": "QU4k5izZzG8zxWdgPOz8",
+        "id": "41Bgw6v9ibyahmaHn8fQ",
         "updatedAt": {
-            "_seconds": 1654251903,
+            "_seconds": 1654971903,
             "_nanoseconds": 686000000
         },
-        "optimalPrice": null,
-        "currentPrice": 10000,
-        "categoryId": "c1",
-        "description": "Updated Product 1 description",
+        "description": "oke",
+        "image": "https://hosted-image.com/images%random-image.jpg?alt=media&token=randomized-token",
+        "endPrice": 10000,
+        "pricePredictions": [
+            {
+                "total_sales": 3.883064031600952,
+                "total_profit": 19221.164938202182,
+                "selling_price": 4999.999475
+            },
+            ...
+        ],
         "createdAt": {
-            "_seconds": 1654251787,
-            "_nanoseconds": 547000000
+            "_seconds": 1654941781,
+            "_nanoseconds": 170000000
         },
-        "brandId": "b1",
-        "title": "Updated Product 1"
+        "startPrice": 5000,
+        "title": "Sweeter Latte",
+        "currentPrice": 11000,
+        "optimalPrice": 9949.998955250023,
+        "cost": 50,
+        "category": "0",
+        "brandId": "0"
     }
 }
 ```
@@ -396,3 +505,6 @@ Delete Product data from the database with the ID provided by Firebase.
       "message": "Error deleting product",
   }
   ```
+  
+### Notes
+--
