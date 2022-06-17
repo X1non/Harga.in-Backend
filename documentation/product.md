@@ -114,18 +114,6 @@ Writes Product data  the ID provided by Firebase, only if the Product haven't re
   }
   ```
   
-- If there's required "string of number" data value is NaN.
-  - **Code** : `400 Bad Request`
-
-  - **Example**
-
-  ```json
-  {
-      "error": true,
-      "message": "This property: '${invalidStringOfNumData}' should be represented as string of number",
-  }
-  ```
-  
 - If there's uneeded data fields.
   - **Code** : `403 Forbidden`
 
@@ -421,7 +409,7 @@ Product with ID of `41Bgw6v9ibyahmaHn8fQ` wants its `title` to be changed to `Sw
   }
   ```
      
-- Other errors are the same as the error when creating product (didn't provide required property, required data/property value is empty, request value contains zero/negative for number, required "string of number" data value is NaN).
+- Other errors are the same as the error when creating product (didn't provide required property, required data/property value is empty, request value contains zero/negative for number).
 
 ### Notes
 --
