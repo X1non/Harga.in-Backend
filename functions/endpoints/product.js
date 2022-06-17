@@ -285,14 +285,6 @@ app.put("/:id", async (req, res) => {
     return;
   }
 
-  if (invalidStringOfNumData.length > 0) {
-    res.status(400).send({
-      error: true,
-      message: `This property: '${invalidStringOfNumData}' should be represented as string of number`,
-    });
-    return;
-  }
-
   try {
     const oldProductRef = admin.firestore().collection("products").doc(req.params.id);
     const oldProductSnapshot = await oldProductRef.get();
