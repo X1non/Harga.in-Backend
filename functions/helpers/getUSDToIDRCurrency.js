@@ -16,6 +16,7 @@ const getUSDToIDRCurrency = async () => {
       await admin.firestore().collection("constants").doc("currencyRate").set({
         "USD_IDR": data.USD_IDR,
         "IDR_USD": data.IDR_USD,
+        "updatedAt": admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
       return data;
     }
