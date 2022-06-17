@@ -1,21 +1,34 @@
 const admin = require("firebase-admin");
 const axios = require("axios").default;
-const getUSDToIDRCurrency = require("../helpers/getUSDToIDRCurrency");
 
-// Optimal price ML's model
+// Optimal price ML model
 const getOptimalPrice = async (priceCost, category) => {
+  const defaultPriceLimit = {
+    "start": 1.15,
+    "end": 1.5
+  }
+
+  const defaultUSDtoIDRCurrency = {
+    "USD_IDR": 14500,
+    "IDR_USD": 0.00006896551,
+  };
+
   const priceLimitSnapshot = await admin.firestore().collection("constants").doc("priceLimit").get();
   const priceLimit = priceLimitSnapshot.data();
+
+  const currencyRateSnapshot = await admin.firestore().collection("constants").doc("currencyRate").get();
+  const currencyRate = currencyRateSnapshot.data();
 
   try {
     const BASE_URL = process.env.ML_MODEL_URL;
     const ML_MODEL_ENDPOINT = `${BASE_URL}/predict`;
-    const currency = await getUSDToIDRCurrency();
+    const limit = (priceLimit.exists) ? priceLimit : defaultPriceLimit
+    const currency = (currencyRate.exists) ? currencyRate : defaultUSDtoIDRCurrency;
 
     const convertedPrice = {
       cost: priceCost * currency["IDR_USD"],
-      start: priceCost * (priceLimit ? priceLimit.start : 1.15) * currency["IDR_USD"],
-      end: priceCost * (priceLimit ? priceLimit.end : 1.5) * currency["IDR_USD"],
+      start: priceCost * limit["start"] * currency["IDR_USD"],
+      end: priceCost * limit["end"] * currency["IDR_USD"],
     };
 
     const data = {
