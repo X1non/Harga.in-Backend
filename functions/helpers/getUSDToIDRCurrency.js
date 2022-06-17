@@ -1,10 +1,5 @@
-// require("dotenv").config();
+const admin = require("firebase-admin");
 const axios = require("axios").default;
-
-const defaultUSDtoIDRCurrency = {
-  USD_IDR: 14500,
-  IDR_USD: 0.00006896551,
-};
 
 const getUSDToIDRCurrency = async () => {
   const CURRENCY_API_KEY = process.env.CURRENCY_API_KEY;
@@ -15,13 +10,17 @@ const getUSDToIDRCurrency = async () => {
       method: "get",
       url: CURRENCY_API_URL,
     });
+
     if (response.status === 200 && response.statusText === "OK") {
-      return response.data;
-    } else {
-      return defaultUSDtoIDRCurrency;
+      const data = response.data;
+      await admin.firestore().collection("constants").doc("currencyRate").set({
+        "USD_IDR": data.USD_IDR,
+        "IDR_USD": data.IDR_USD,
+      }, { merge: true });
+      return data;
     }
   } catch (error) {
-    return defaultUSDtoIDRCurrency;
+    return error;
   }
 };
 
