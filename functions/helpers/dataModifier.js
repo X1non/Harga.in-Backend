@@ -29,7 +29,6 @@ const setBrandCategory = (brandsMap, categoriesMap, productData) => {
     id: productData.brandId,
     name: brandsMap.get(productData.brandId),
   };
-  console.log("masuk set: ", productData.brand);
 
   delete productData.brandId;
 
