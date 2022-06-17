@@ -32,11 +32,9 @@ app.post("/", async (req, res) => {
     "brandId",
   ];
   const pricesData = ["cost", "currentPrice"];
-  const stringOfNumberData = ["categoryId"];
   let missingData;
   let emptyData = [];
   let invalidNumericData = [];
-  let invalidStringOfNumData = [];
 
   requiredData.forEach((attr) => {
     // Check if req.body key/field missing required data
@@ -50,8 +48,6 @@ app.post("/", async (req, res) => {
         emptyData.push(attr);
       } else if (attr in pricesData && data[attr] <= 0) { 
         invalidNumericData.push(attr);
-      } else if (attr in stringOfNumberData && Number(data[attr]) === NaN) {
-        invalidStringOfNumData.push(attr);
       }
     }
   });
@@ -76,14 +72,6 @@ app.post("/", async (req, res) => {
     res.status(400).send({
       error: true,
       message: `This property: '${invalidNumericData}' cannot be zero or negative`,
-    });
-    return;
-  }
-
-  if (invalidStringOfNumData.length > 0) {
-    res.status(400).send({
-      error: true,
-      message: `This property: '${invalidStringOfNumData}' should be represented as string of number`,
     });
     return;
   }
@@ -120,7 +108,7 @@ app.post("/", async (req, res) => {
     functions.logger.error("Error creating product", error);
     res.status(404).send({
       error: true,
-      message: `Error creating product`,
+      message: `Error creating product ${error}`,
     });
   }
 });
@@ -205,7 +193,7 @@ app.get("/", async (req, res) => {
     functions.logger.error("Error fetching products", error);
     res.status(404).send({
       error: true,
-      message: `Error fetching products`,
+      message: `Error fetching products ${error}`,
     });
   }
 });
@@ -235,7 +223,7 @@ app.get("/:id", async (req, res) => {
     functions.logger.error("Error fetching product", error);
     res.status(404).send({
       error: true,
-      message: `Error fetching product`,
+      message: `Error fetching product ${error}`,
     });
   }
 });
@@ -253,10 +241,8 @@ app.put("/:id", async (req, res) => {
     "brandId",
   ];
   const pricesData = ["cost", "currentPrice"];
-  const stringOfNumberData = ["categoryId"];
   let emptyData = [];
   let invalidNumericData = [];
-  let invalidStringOfNumData = [];
 
   // Check if req.body is empty
   if (isObjectEmpty(data)) {
@@ -280,8 +266,6 @@ app.put("/:id", async (req, res) => {
       emptyData.push(attr);
     } else if (field in pricesData && data[field] <= 0) {  // Check req.body zero or negative number for prices data
       invalidNumericData.push(attr);
-    } else if (attr in stringOfNumberData && Number(data[attr]) === NaN) { // Check for data with string type that's need to be represented as number
-      invalidStringOfNumData.push(attr);
     }
   }
 
@@ -350,7 +334,7 @@ app.put("/:id", async (req, res) => {
     functions.logger.error("Error updating product", error);
     res.status(404).send({
       error: true,
-      message: `Error updating product`,
+      message: `Error updating product ${error}`,
     });
   }
 });
@@ -383,7 +367,7 @@ app.delete("/:id", async (req, res) => {
     functions.logger.error("Error deleting product", error);
     res.status(404).send({
       error: true,
-      message: `Error deleting product`,
+      message: `Error deleting product ${error}`,
     });
   }
 });
