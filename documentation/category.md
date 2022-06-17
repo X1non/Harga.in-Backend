@@ -95,7 +95,7 @@ Writes Category data  the ID provided by Firebase, only if the Category haven't 
    ```json
    {
        "error": true,
-       "message": "You are not allowed to add or change '${field}' data to product",
+       "message": "You are not allowed to add '${field}' data to product",
    }
    ```
    
@@ -282,6 +282,19 @@ Update Category data in the database with the ID provided by Firebase.
       "message": "message about error",
   }
   ```
+  
+- If there's uneeded data fields.
+  - **Code** : `403 Forbidden`
+
+  - **Example**
+
+   ```json
+   {
+       "error": true,
+       "message": "You are not allowed to add or change '${field}' data to product",
+   }
+   ```
+   
 - If category not exists
   - **Code** : `404 Not Found`
 
