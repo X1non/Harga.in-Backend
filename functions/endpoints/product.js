@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const functions = require("firebase-functions");
 
 const express = require("express");
 const cookieParser = require("cookie-parser")();
@@ -116,6 +117,7 @@ app.post("/", async (req, res) => {
       data: { id: createdProduct.id, ...createdProduct.data() },
     });
   } catch (error) {
+    functions.logger.error("Error creating product", error);
     res.status(404).send({
       error: true,
       message: `Error creating product`,
@@ -200,6 +202,7 @@ app.get("/", async (req, res) => {
       data: products,
     });
   } catch (error) {
+    functions.logger.error("Error fetching products", error);
     res.status(404).send({
       error: true,
       message: `Error fetching products`,
@@ -229,6 +232,7 @@ app.get("/:id", async (req, res) => {
       });
     }
   } catch (error) {
+    functions.logger.error("Error fetching product", error);
     res.status(404).send({
       error: true,
       message: `Error fetching product`,
@@ -343,6 +347,7 @@ app.put("/:id", async (req, res) => {
       data: { id: productUpdated.id, ...productUpdated.data() },
     });
   } catch (error) {
+    functions.logger.error("Error updating product", error);
     res.status(404).send({
       error: true,
       message: `Error updating product`,
@@ -375,6 +380,7 @@ app.delete("/:id", async (req, res) => {
       data: { id: productDeleted.id, ...productDeleted.data() },
     });
   } catch (error) {
+    functions.logger.error("Error deleting product", error);
     res.status(404).send({
       error: true,
       message: `Error deleting product`,
